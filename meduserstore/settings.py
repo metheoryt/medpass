@@ -151,4 +151,9 @@ STATIC_URL = '/static/'
 
 
 import django_heroku
-django_heroku.settings(locals())
+import dj_database_url
+
+django_heroku.settings(locals(), databases=False)
+
+# Configure Django for DATABASE_URL environment variable.
+DATABASES['default'] = dj_database_url.config()
