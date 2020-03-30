@@ -4,12 +4,6 @@ from core import models
 from core.models import Region
 
 
-# class ForeignVisitSerializer(serializers.HyperlinkedModelSerializer):
-#     class Meta:
-#         model = models.ForeignVisit
-#         fields = '__all__'
-
-
 class PersonSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Person
