@@ -4,13 +4,26 @@ from core import models
 from core.models import Region
 
 
+# class ForeignVisitSerializer(serializers.HyperlinkedModelSerializer):
+#     class Meta:
+#         model = models.ForeignVisit
+#         fields = '__all__'
+
+
+class InspectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.User
+        fields = 'id', 'username', 'checkpoint'
+        read_only_fields = 'id', 'username'
+
+
 class PersonSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Person
         fields = ['full_name', 'birth_date', 'sex',
                   'iin', 'first_name', 'second_name',
-                  'last_name', 'contact_number', 'dmed_info', 'add_date']
-        read_only_fields = ['dmed_info']
+                  'last_name', 'contact_numbers', 'dmed_info', 'add_date', 'foreign_visits']
+        read_only_fields = ['dmed_info', 'foreign_visits']
 
 
 class DMEDPersonInfoSerializer(serializers.HyperlinkedModelSerializer):
@@ -22,7 +35,7 @@ class DMEDPersonInfoSerializer(serializers.HyperlinkedModelSerializer):
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Region
-        fields = ['country', 'name']
+        fields = ['id', 'country', 'name']
 
 
 class CheckPointPassSerializer(serializers.HyperlinkedModelSerializer):
@@ -37,7 +50,7 @@ class CheckPointSerializer(serializers.HyperlinkedModelSerializer):
     """Контрольно-пропускной пост"""
     class Meta:
         model = models.Checkpoint
-        fields = ['name', 'location', 'region']
+        fields = ['id', 'name', 'location', 'region']
 
     # region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())
 

@@ -20,7 +20,6 @@ class Countries(models.TextChoices):
     TRK = 'TRK', 'Туркменистан'
 
 
-# Create your models here.
 class Region(BaseModel):
     """Регион страны"""
     name = f.TextField()
@@ -32,12 +31,13 @@ class Region(BaseModel):
         return self.name
 
 
-class User(auth_models.AbstractUser):
-    """Пользователь проекта"""
-    region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True)
+class Place(BaseModel):
+    region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
+    address = f.TextField(null=True, blank=True)
+    contact_number = f.TextField(null=True, blank=True)
 
     def __str__(self):
-        return self.username
+        return f'{self.address} ({self.region})'
 
 
 class DMEDPersonInfo(BaseModel):
@@ -87,16 +87,22 @@ class Person(BaseModel):
         FEMALE = 'F'
 
     # обязательные
-    full_name = f.CharField(max_length=300)
-    sex = f.CharField(max_length=10, choices=Sex.choices)
-    birth_date = f.DateField()
+    full_name = f.CharField('полное имя', max_length=300)
+    sex = f.CharField('пол', max_length=10, choices=Sex.choices, help_text='M/F - муж/жен')
+    birth_date = f.DateField('дата рождения', help_text='YYY-MM-DD')
 
     # опциональные
-    iin = f.CharField(max_length=32, null=True, blank=True, unique=True)
-    first_name = f.TextField(max_length=100, null=True, blank=True)
-    second_name = f.TextField(max_length=100, null=True, blank=True)
-    last_name = f.CharField(max_length=100, null=True, blank=True)
-    contact_number = f.CharField(max_length=32, null=True, blank=True)
+    iin = f.CharField('ИИН', max_length=32, null=True, blank=True, unique=True)
+    last_name = f.CharField('фамилия', max_length=100, null=True, blank=True)
+    first_name = f.TextField('имя', max_length=100, null=True, blank=True)
+    second_name = f.TextField('отчество', max_length=100, null=True, blank=True)
+    contact_numbers = f.CharField('контактные номера телефона', max_length=128, null=True, blank=True, help_text='можно несколько через запятые')
+    residence_place = models.ForeignKey(Place, verbose_name='место проживания', related_name='residents', on_delete=models.SET_NULL, null=True, blank=True)
+    study_place = models.ForeignKey(Place, verbose_name='место учебы', related_name='students', on_delete=models.SET_NULL, null=True, blank=True)
+    citizenship = f.CharField('гражданство', max_length=256, null=True, blank=True, help_text='гражданин какой страны?')
+    had_contact_with_infected = f.BooleanField('имел контакт с инфицированным', null=True, blank=True)
+    been_abroad_last_month = f.BooleanField('был за рубежом последний месяц', null=True, blank=True)
+    extra = f.TextField('дополнительно', null=True, blank=True)
 
     # данные конкретной системы
     dmed_info = models.OneToOneField(DMEDPersonInfo, on_delete=models.SET_NULL, null=True, blank=True)
@@ -107,8 +113,8 @@ class Person(BaseModel):
     def save(self, *args, **kwargs):
         self.iin = self.iin or None
         fio = (self.first_name, self.second_name, self.last_name)
-        if not self.full_name and all(fio):
-            self.full_name = ' '.join(v or '' for v in fio)
+        if not self.full_name and any(fio):
+            self.full_name = ' '.join((v for v in fio if v))
         return super(Person, self).save(*args, **kwargs)
 
     def dmed_update(self, r: DMEDPersonInfo):
@@ -129,13 +135,11 @@ class Person(BaseModel):
         self.dmed_info = r
 
 
-class Place(BaseModel):
-    region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
-    address = f.TextField(null=True, blank=True)
-    contact_number = f.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return f'{self.address} ({self.region})'
+# class ForeignVisit(BaseModel):
+#     """Записи о пребывании лица в других странах. Если отсутствуют - считаем что лицо не покидало границ Казахстана"""
+#     person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='foreign_visits')
+#     country = f.CharField('страна', max_length=128)
+#     leave_date = f.DateField('дата выезда')
 
 
 class Checkpoint(BaseModel):
@@ -148,10 +152,20 @@ class Checkpoint(BaseModel):
         return self.name
 
 
+class User(auth_models.AbstractUser):
+    """Пользователь проекта"""
+    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.SET_NULL, null=True)
+    """кпп инспектора"""
+
+    def __str__(self):
+        return self.username
+
+
 class CheckpointPass(BaseModel):
     """Акт прохождения контрольно-пропускного поста"""
     date = f.DateTimeField(auto_now=timezone.now)
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    inspector = models.ForeignKey(User, verbose_name='инспектор', on_delete=models.SET_NULL, null=True)
     checkpoint = models.ForeignKey(Checkpoint, on_delete=models.SET_NULL, null=True, blank=True)
     source_place = models.ForeignKey(Place, related_name='exit_checkpoints', on_delete=models.SET_NULL, null=True, blank=True)
     destination_place = models.ForeignKey(Place, related_name='enter_checkpoints', on_delete=models.SET_NULL, null=True, blank=True)

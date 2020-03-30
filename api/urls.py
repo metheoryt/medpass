@@ -1,4 +1,3 @@
-from django.contrib import admin
 from django.urls import path
 from django.urls import include
 
@@ -7,6 +6,7 @@ from . import views
 
 router = routers.DefaultRouter()
 router.register(r'person', views.PersonViewSet)
+# router.register(r'foreign-visit', views.ForeignVisitViewSet)
 router.register(r'dmed-info', views.DMEDPersonInfoViewSet)
 router.register(r'checkpoint-pass', views.CheckpointPassViewSet)
 router.register(r'checkpoint', views.CheckpointViewSet)
@@ -17,5 +17,6 @@ router.register(r'region', views.RegionViewSet)
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     path('', include(router.urls)),
+    path('inspector', views.InspectorDetail.as_view()),
     path('auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
