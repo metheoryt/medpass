@@ -1,1 +1,1 @@
-web: gunicorn django_demo.wsgi
+web: gunicorn --threads=32 --workers=4 meduserstore.wsgi
