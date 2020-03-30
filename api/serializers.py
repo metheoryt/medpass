@@ -23,12 +23,18 @@ class RegionSerializer(serializers.ModelSerializer):
         fields = ['id', 'country', 'name']
 
 
-class CheckPointPassSerializer(serializers.HyperlinkedModelSerializer):
+class CheckPointPassSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CheckpointPass
         fields = ['date', 'person', 'checkpoint',
-                  'source_place', 'destination_place']
-        depth = 1
+                  'source_place', 'destination_place', 'inspector']
+        read_only_fields = ['inspector']
+
+    def create(self, validated_data):
+        instance = super(CheckPointPassSerializer, self).create(validated_data)
+        instance.inspector = self.context['request'].user
+        instance.save()
+        return instance
 
 
 class CheckPointSerializer(serializers.HyperlinkedModelSerializer):
