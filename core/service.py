@@ -2,11 +2,16 @@ from datetime import datetime
 
 import requests
 from django.core.cache import cache
-import json
+from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import APIException, status
 
-from django.utils import timezone
+from core.models import DMEDPersonInfo
 
-from core.models import DMEDPersonInfo, DMEDPersonMarker
+
+class BadGateway(APIException):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    default_detail = _('Bad gateway.')
+    default_code = 'bad_gateway'
 
 
 class DMEDService:
@@ -37,10 +42,16 @@ class DMEDService:
         ))
         return rv.text
 
+    def handle_response(self, rv):
+        data = rv.json()
+        if isinstance(data, dict) and 'Code' in data:
+            raise BadGateway(data.get('Message'))
+        return data
+
     def get_person(self, iin: str):
         """Заполняет пустой или обновляет существующий объект DMEDPersonInfo"""
         rv = self.s.post(self.url + self.URL_GET_PERSONS, json=dict(iin=iin))
-        data = json.loads(rv.text)
+        data = self.handle_response(rv)
         if data:
             pi = DMEDPersonInfo()
 
@@ -64,4 +75,4 @@ class DMEDService:
 
     def get_markers(self, p: DMEDPersonInfo):
         rv = self.s.post(self.url + self.URL_GET_MARKERS, json=dict(personID=p.id, limit=1024))
-        return rv.json()['data']
+        return self.handle_response(rv)['data']

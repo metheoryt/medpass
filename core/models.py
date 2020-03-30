@@ -49,8 +49,8 @@ class DMEDPersonInfo(BaseModel):
         MALE_XXI = 5
         FEMALE_XXI = 6
 
-    id = f.BigIntegerField(primary_key=True)
-    iin = f.CharField(max_length=32)
+    iin = f.CharField(max_length=32, primary_key=True)
+    id = f.BigIntegerField()
 
     first_name = f.TextField(null=True, blank=True)
     second_name = f.TextField(null=True, blank=True)
