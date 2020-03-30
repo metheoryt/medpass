@@ -31,13 +31,13 @@ class InspectorDetail(views.APIView):
             raise Http404
 
     def get(self, request, format=None):
-        snippet = self.get_object()
-        serializer = ss.InspectorSerializer(snippet)
+        user = self.get_object()
+        serializer = ss.InspectorSerializer(user, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, format=None):
-        snippet = self.get_object()
-        serializer = ss.InspectorSerializer(snippet, data=request.data)
+        user = self.get_object()
+        serializer = ss.InspectorSerializer(user, data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -77,9 +77,9 @@ class DMEDPersonInfoViewSet(viewsets.ReadOnlyModelViewSet):
             u: User = request.user
             regions = []
             q = Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority')
-            if u.region:
-                q = q.exclude(u.region.id)
-                regions.append(u.region)
+            if u.checkpoint:
+                q = q.exclude(id=u.checkpoint.region.id)
+                regions.append(u.checkpoint.region)
             regions.extend(q)
 
             for region in regions:
@@ -122,8 +122,9 @@ class PlaceViewSet(viewsets.ModelViewSet):
     queryset = Place.objects.all().order_by('-add_date')
     serializer_class = ss.PlaceSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [SearchFilter]
-    search_fields = ['^address', '^region__name']
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['region']
+    search_fields = ['^address']
 
 
 class RegionViewSet(viewsets.ModelViewSet):

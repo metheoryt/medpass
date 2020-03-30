@@ -10,20 +10,11 @@ from core.models import Region
 #         fields = '__all__'
 
 
-class InspectorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.User
-        fields = 'id', 'username', 'checkpoint'
-        read_only_fields = 'id', 'username'
-
-
 class PersonSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Person
-        fields = ['full_name', 'birth_date', 'sex',
-                  'iin', 'first_name', 'second_name',
-                  'last_name', 'contact_numbers', 'dmed_info', 'add_date', 'foreign_visits']
-        read_only_fields = ['dmed_info', 'foreign_visits']
+        fields = '__all__'
+        read_only_fields = ['dmed_info']
 
 
 class DMEDPersonInfoSerializer(serializers.HyperlinkedModelSerializer):
@@ -52,7 +43,12 @@ class CheckPointSerializer(serializers.HyperlinkedModelSerializer):
         model = models.Checkpoint
         fields = ['id', 'name', 'location', 'region']
 
-    # region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())
+
+class InspectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.User
+        fields = 'id', 'username', 'checkpoint'
+        read_only_fields = 'id', 'username'
 
 
 class PlaceSerializer(serializers.HyperlinkedModelSerializer):
@@ -60,4 +56,4 @@ class PlaceSerializer(serializers.HyperlinkedModelSerializer):
         model = models.Place
         fields = ['region', 'address', 'contact_number']
 
-    # region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())
+    region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())
