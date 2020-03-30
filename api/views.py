@@ -11,7 +11,7 @@ from . import serializers as ss
 
 
 class InspectorDetail(views.APIView):
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return User.objects.filter(groups__name='inspectors')
