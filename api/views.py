@@ -13,11 +13,11 @@ from . import serializers as ss
 class InspectorDetail(views.APIView):
     permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
 
+    def get_queryset(self):
+        return User.objects.filter(groups__name='inspectors')
+
     def get_object(self):
-        try:
-            return User.objects.filter(groups__name='inspectors').get(pk=self.request.user.id)
-        except User.DoesNotExist:
-            raise Http404
+        return self.request.user
 
     def get(self, request, format=None):
         user = self.get_object()
