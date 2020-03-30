@@ -56,9 +56,32 @@ class DMEDPersonInfoSerializer(serializers.HyperlinkedModelSerializer):
                 raise NotFound()
 
 
-class CheckPointPassSerializer(serializers.ModelSerializer):
+class RegionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Region
+        fields = ['country', 'name']
+
+
+class CheckPointPassSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.CheckpointPass
         fields = ['date', 'person', 'checkpoint',
                   'source_place', 'destination_place']
         depth = 1
+
+
+class CheckPointSerializer(serializers.HyperlinkedModelSerializer):
+    """Контрольно-пропускной пост"""
+    class Meta:
+        model = models.Checkpoint
+        fields = ['name', 'location', 'region']
+
+    # region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())
+
+
+class PlaceSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = models.Place
+        fields = ['region', 'address', 'contact_number']
+
+    # region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())

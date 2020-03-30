@@ -37,9 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'rest_framework',
+    'django_filters',
     'core.apps.CoreConfig',
-    'api.apps.ApiConfig',
+    'api.apps.ApiConfig'
 ]
 
 # django.contrib.auth
@@ -50,7 +52,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
-    ]
+    ],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 # core

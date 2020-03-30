@@ -105,6 +105,7 @@ class Person(BaseModel):
         return f'{self.full_name} ({self.iin})'
 
     def save(self, *args, **kwargs):
+        self.iin = self.iin or None
         fio = (self.first_name, self.second_name, self.last_name)
         if not self.full_name and all(fio):
             self.full_name = ' '.join(v or '' for v in fio)
@@ -129,7 +130,6 @@ class Person(BaseModel):
 
 
 class Place(BaseModel):
-    country = f.TextField(choices=Countries.choices, default=Countries.KZ, blank=True)
     region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
     address = f.TextField(null=True, blank=True)
     contact_number = f.TextField(null=True, blank=True)
@@ -138,7 +138,7 @@ class Place(BaseModel):
         return f'{self.address} ({self.region})'
 
 
-class CheckPoint(BaseModel):
+class Checkpoint(BaseModel):
     """Контрольно-пропускной пост"""
     name = f.CharField(max_length=500)
     location = f.CharField(max_length=500, null=True, blank=True)
@@ -152,7 +152,7 @@ class CheckpointPass(BaseModel):
     """Акт прохождения контрольно-пропускного поста"""
     date = f.DateTimeField(auto_now=timezone.now)
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
-    checkpoint = models.ForeignKey(CheckPoint, on_delete=models.SET_NULL, null=True, blank=True)
+    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.SET_NULL, null=True, blank=True)
     source_place = models.ForeignKey(Place, related_name='exit_checkpoints', on_delete=models.SET_NULL, null=True, blank=True)
     destination_place = models.ForeignKey(Place, related_name='enter_checkpoints', on_delete=models.SET_NULL, null=True, blank=True)
 
