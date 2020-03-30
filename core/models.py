@@ -99,6 +99,7 @@ class Person(BaseModel):
     contact_numbers = f.CharField('контактные номера телефона', max_length=128, null=True, blank=True, help_text='можно несколько через запятые')
     residence_place = models.ForeignKey(Place, verbose_name='место проживания', related_name='residents', on_delete=models.SET_NULL, null=True, blank=True)
     study_place = models.ForeignKey(Place, verbose_name='место учебы', related_name='students', on_delete=models.SET_NULL, null=True, blank=True)
+    working_place = models.ForeignKey(Place, verbose_name='место работы', related_name='workers', on_delete=models.SET_NULL, null=True, blank=True)
     citizenship = f.CharField('гражданство', max_length=256, null=True, blank=True, help_text='гражданин какой страны?')
     had_contact_with_infected = f.BooleanField('имел контакт с инфицированным', null=True, blank=True)
     been_abroad_last_month = f.BooleanField('был за рубежом последний месяц', null=True, blank=True)
