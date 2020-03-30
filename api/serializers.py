@@ -4,17 +4,19 @@ from core import models
 from core.models import Region
 
 
-class PersonSerializer(serializers.HyperlinkedModelSerializer):
+class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Person
         fields = '__all__'
-        read_only_fields = ['dmed_info']
+
+    url = serializers.HyperlinkedIdentityField(view_name='person-detail', read_only=True)
+    dmed_info = serializers.HyperlinkedRelatedField(view_name='dmedpersoninfo-detail', read_only=True)
 
 
 class DMEDPersonInfoSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.DMEDPersonInfo
-        fields = ['iin', 'id', 'rpn_id', 'person', 'markers', 'nationality_id', 'citizenship_id']
+        fields = '__all__'
 
 
 class RegionSerializer(serializers.ModelSerializer):
