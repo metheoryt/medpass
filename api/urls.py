@@ -10,7 +10,7 @@ router.register(r'person', views.PersonViewSet)
 router.register(r'dmed-info', views.DMEDPersonInfoViewSet)
 router.register(r'checkpoint-pass', views.CheckpointPassViewSet)
 router.register(r'checkpoint', views.CheckpointViewSet)
-router.register(r'place', views.PlaceViewSet)
+# router.register(r'place', views.PlaceViewSet)
 router.register(r'region', views.RegionViewSet)
 
 # Wire up our API using automatic URL routing.

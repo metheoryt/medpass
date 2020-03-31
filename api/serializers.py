@@ -55,9 +55,9 @@ class InspectorSerializer(serializers.ModelSerializer):
         read_only_fields = 'id', 'username'
 
 
-class PlaceSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = models.Place
-        fields = ['region', 'address', 'contact_number']
-
-    region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())
+# class PlaceSerializer(serializers.HyperlinkedModelSerializer):
+#     class Meta:
+#         model = models.Place
+#         fields = ['region', 'address', 'contact_number']
+#
+#     region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())

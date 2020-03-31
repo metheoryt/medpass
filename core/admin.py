@@ -5,7 +5,7 @@ from . import models
 
 
 admin.site.register(User, UserAdmin)
-admin.site.register(models.Place)
+# admin.site.register(models.Place)
 admin.site.register(models.Checkpoint)
 admin.site.register(models.Region)
 admin.site.register(models.Person)

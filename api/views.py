@@ -5,7 +5,7 @@ from rest_framework import viewsets, permissions, views, status
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 
-from core.models import Person, DMEDPersonInfo, CheckpointPass, Checkpoint, Place, Region, User
+from core.models import Person, DMEDPersonInfo, CheckpointPass, Checkpoint, Region, User
 from core.service import DMEDService
 from . import serializers as ss
 
@@ -97,13 +97,13 @@ class CheckpointViewSet(viewsets.ModelViewSet):
     search_fields = ['^name', '^region__name']
 
 
-class PlaceViewSet(viewsets.ModelViewSet):
-    queryset = Place.objects.all().order_by('-add_date')
-    serializer_class = ss.PlaceSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
-    filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['region']
-    search_fields = ['^address']
+# class PlaceViewSet(viewsets.ModelViewSet):
+#     queryset = Place.objects.all().order_by('-add_date')
+#     serializer_class = ss.PlaceSerializer
+#     permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+#     filter_backends = [DjangoFilterBackend, SearchFilter]
+#     filterset_fields = ['region']
+#     search_fields = ['^address']
 
 
 class RegionViewSet(viewsets.ModelViewSet):

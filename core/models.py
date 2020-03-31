@@ -31,13 +31,13 @@ class Region(BaseModel):
         return self.name
 
 
-class Place(BaseModel):
-    region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
-    address = f.TextField(null=True, blank=True)
-    contact_number = f.TextField(null=True, blank=True)
-
-    def __str__(self):
-        return f'{self.address} ({self.region})'
+# class Place(BaseModel):
+#     region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
+#     address = f.TextField(null=True, blank=True)
+#     contact_number = f.TextField(null=True, blank=True)
+#
+#     def __str__(self):
+#         return f'{self.address} ({self.region})'
 
 
 class DMEDPersonInfo(BaseModel):
@@ -97,9 +97,9 @@ class Person(BaseModel):
     first_name = f.TextField('имя', max_length=100, null=True, blank=True)
     second_name = f.TextField('отчество', max_length=100, null=True, blank=True)
     contact_numbers = f.CharField('контактные номера телефона', max_length=128, null=True, blank=True, help_text='можно несколько через запятые')
-    residence_place = models.ForeignKey(Place, verbose_name='место проживания', related_name='residents', on_delete=models.SET_NULL, null=True, blank=True)
-    study_place = models.ForeignKey(Place, verbose_name='место учебы', related_name='students', on_delete=models.SET_NULL, null=True, blank=True)
-    working_place = models.ForeignKey(Place, verbose_name='место работы', related_name='workers', on_delete=models.SET_NULL, null=True, blank=True)
+    residence_place = f.CharField('место проживания', max_length=512, null=True, blank=True)
+    study_place = f.CharField('место учебы', max_length=512, null=True, blank=True)
+    working_place = f.CharField('место работы', max_length=512, null=True, blank=True)
     citizenship = f.CharField('гражданство', max_length=256, null=True, blank=True, help_text='гражданин какой страны?')
     had_contact_with_infected = f.BooleanField('имел контакт с инфицированным', null=True, blank=True)
     been_abroad_last_month = f.BooleanField('был за рубежом последний месяц', null=True, blank=True)
@@ -168,8 +168,8 @@ class CheckpointPass(BaseModel):
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     inspector = models.ForeignKey(User, verbose_name='инспектор', on_delete=models.SET_NULL, null=True)
     checkpoint = models.ForeignKey(Checkpoint, on_delete=models.SET_NULL, null=True, blank=True)
-    source_place = models.ForeignKey(Place, related_name='exit_checkpoints', on_delete=models.SET_NULL, null=True, blank=True)
-    destination_place = models.ForeignKey(Place, related_name='enter_checkpoints', on_delete=models.SET_NULL, null=True, blank=True)
+    source_place = f.CharField('исходный пункт', max_length=512, null=True, blank=True)
+    destination_place = f.CharField('пункт назначения', max_length=512, null=True, blank=True)
 
     def __str__(self):
         return f'{self.person} @ {self.checkpoint} {self.source_place} -> {self.destination_place}'
