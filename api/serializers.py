@@ -18,6 +18,8 @@ class DMEDPersonInfoSerializer(serializers.HyperlinkedModelSerializer):
         model = models.DMEDPersonInfo
         fields = '__all__'
 
+    person = serializers.HyperlinkedRelatedField(view_name='person-detail', read_only=True)
+
 
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
