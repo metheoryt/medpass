@@ -32,11 +32,12 @@ class CheckPointPassSerializer(serializers.ModelSerializer):
         model = models.CheckpointPass
         fields = ['date', 'person', 'checkpoint',
                   'source_place', 'destination_place', 'inspector']
-        read_only_fields = ['inspector']
+        read_only_fields = ['inspector', 'checkpoint']
 
     def create(self, validated_data):
         instance = super(CheckPointPassSerializer, self).create(validated_data)
         instance.inspector = self.context['request'].user
+        instance.checkpoint = instance.inspector.checkpoint
         instance.save()
         return instance
 
