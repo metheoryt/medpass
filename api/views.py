@@ -3,11 +3,13 @@ from django.http import Http404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, views, status
 from rest_framework.filters import SearchFilter
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
-from core.models import Person, DMEDPersonInfo, CheckpointPass, Checkpoint, Region, User
+from core.models import Person, CheckpointPass, Checkpoint, Region, User, Marker
 from core.service import DMEDService
 from . import serializers as ss
+from django.db.models import Q
 
 
 class DjangoStrictModelPermissions(permissions.DjangoModelPermissions):
@@ -52,53 +54,88 @@ class PersonViewSet(viewsets.ModelViewSet):
     serializer_class = ss.PersonSerializer
     permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['iin']
-    search_fields = ['^full_name']
+    filterset_fields = ['birth_date']
+    search_fields = ['$full_name']
 
+    def get_object(self):
+        # получает Person по id или iin
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        pk = self.kwargs[lookup_url_kwarg]
 
-class DMEDPersonInfoViewSet(viewsets.ReadOnlyModelViewSet):
-    """Данные о людях в dmed"""
-    queryset = DMEDPersonInfo.objects.all().order_by('-add_date')
-    serializer_class = ss.DMEDPersonInfoSerializer
-    permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
+        queryset = queryset.filter(Q(id=pk) | Q(iin=pk))
+
+        obj = get_object_or_404(queryset)
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
 
     def retrieve(self, request, *args, **kwargs):
         try:
-            return super(DMEDPersonInfoViewSet, self).retrieve(request, *args, **kwargs)
+            # пытаемся найти существующий
+            return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
         except Http404:
+            # ищем в dmed и сохраняем
+            # формируем список регионов, по которым будем искать
             u: User = request.user
             regions = []
             q = Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority')
             if u.checkpoint:
                 q = q.exclude(id=u.checkpoint.region.id)
-                regions.append(u.checkpoint.region)
+                regions.append(u.checkpoint.region)  # регион КПП будет запрошен в первую очередь
             regions.extend(q)
 
+            # создаём свежий объект
+            p = Person()
+            p.iin = kwargs['pk']
+            # ищем в цикле пока не найдём
             for region in regions:
                 dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
-                r = dmed.get_person(kwargs['pk'])
+                p = dmed.update_person(p)
 
-                if r:
-                    r.save()
-                    try:
-                        p = Person.objects.get(iin=kwargs['pk'])
-                    except Person.DoesNotExist:
-                        p = Person()
-                    p.dmed_update(r)
+                if p:
+                    # если апдейт успешен, сохраняем анкету
+                    p.dmed_region = region  # запомним откуда получили информацию
                     p.save()
-
-                    for m in dmed.get_markers(r):
-                        r.markers.create(marker_id=m['markerID'], name=m['markerName'])
+                    dmed.update_person_markers(p)
                     break
+            # возвращаем как есть
+            return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
 
-            return super(DMEDPersonInfoViewSet, self).retrieve(request, *args, **kwargs)
+    def perform_update(self, serializer):
+        # запрещаем обновление базовых данных
+        d = serializer.validated_data
+        i = serializer.instance
+        for f in ['full_name', 'sex', 'birth_date', 'iin', 'first_name', 'second_name', 'last_name']:
+            if getattr(i, f) and d.get(f):
+                del d[f]
+        return super(PersonViewSet, self).perform_update(serializer)
+
+# class DMEDPersonInfoViewSet(viewsets.ReadOnlyModelViewSet):
+#     """Данные о людях в dmed"""
+#     queryset = DMEDPersonInfo.objects.all().order_by('-add_date')
+#     serializer_class = ss.DMEDPersonInfoSerializer
+#     permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
+#
+#     def retrieve(self, request, *args, **kwargs):
+#         try:
+#             return super(DMEDPersonInfoViewSet, self).retrieve(request, *args, **kwargs)
+#         except Http404:
+
+class PersonMarkerViewSet(viewsets.ModelViewSet):
+    """Маркеры"""
+    queryset = Marker.objects.all().order_by('-add_date')
+    serializer_class = ss.MarkerSerializer
+    permission_classes = [DjangoStrictModelPermissions]
 
 
 class CheckpointPassViewSet(viewsets.ModelViewSet):
     """запись о прохождении пропускного пункта"""
     queryset = CheckpointPass.objects.all().order_by('-add_date')
     serializer_class = ss.CheckPointPassSerializer
-    permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
+    permission_classes = [DjangoStrictModelPermissions]
 
 
 class CheckpointViewSet(viewsets.ModelViewSet):

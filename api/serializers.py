@@ -4,21 +4,22 @@ from core import models
 from core.models import Region
 
 
+class MarkerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Marker
+        fields = ['id', 'url', 'name', 'persons']
+
+
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Person
         fields = '__all__'
+        read_only_fields = [
+            'dmed_id', 'dmed_rpn_id', 'dmed_master_data_id', 'dmed_region'
+        ]
 
     url = serializers.HyperlinkedIdentityField(view_name='person-detail', read_only=True)
-    dmed_info = serializers.HyperlinkedRelatedField(view_name='dmedpersoninfo-detail', read_only=True)
-
-
-class DMEDPersonInfoSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = models.DMEDPersonInfo
-        fields = '__all__'
-
-    person = serializers.HyperlinkedRelatedField(view_name='person-detail', read_only=True)
+    markers = serializers.PrimaryKeyRelatedField(many=True, queryset=models.Marker.objects.all())
 
 
 class RegionSerializer(serializers.ModelSerializer):
@@ -54,11 +55,3 @@ class InspectorSerializer(serializers.ModelSerializer):
         model = models.User
         fields = 'id', 'username', 'checkpoint'
         read_only_fields = 'id', 'username'
-
-
-# class PlaceSerializer(serializers.HyperlinkedModelSerializer):
-#     class Meta:
-#         model = models.Place
-#         fields = ['region', 'address', 'contact_number']
-#
-#     region = serializers.PrimaryKeyRelatedField(queryset=Region.objects.all())

@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import APIException, status
 
-from core.models import DMEDPersonInfo
+from core.models import Person, Marker
 
 
 class BadGateway(APIException):
@@ -24,7 +24,10 @@ class DMEDService:
         self.username = username
         self.password = password
         self.s = requests.Session()
-        self.token = token or self.obtain_token(username, password)
+        if token:
+            self.token = token
+        elif not self.token:
+            self.token = self.obtain_token()
 
     @property
     def token(self):
@@ -32,10 +35,10 @@ class DMEDService:
 
     @token.setter
     def token(self, value):
-        cache.set('dmed_token', value)
+        cache.set('dmed_token', value, 60 * 60)
         self.s.headers['Authorization'] = f'Bearer {value}'
 
-    def obtain_token(self, username, password):
+    def obtain_token(self):
         rv = requests.post(url=self.url + self.URL_GET_TOKEN, json=dict(
             systemUsername=self.username,
             systemPassword=self.password
@@ -45,34 +48,44 @@ class DMEDService:
     def handle_response(self, rv):
         data = rv.json()
         if isinstance(data, dict) and 'Code' in data:
-            raise BadGateway(data.get('Message'))
+            raise BadGateway(f"DMED gateway error: {data.get('Message')}")
+        elif isinstance(data, dict) and 'message' in data:
+            raise BadGateway(f"DMED gateway error: {data.get('message')}")
         return data
 
-    def get_person(self, iin: str):
-        """Заполняет пустой или обновляет существующий объект DMEDPersonInfo"""
-        rv = self.s.post(self.url + self.URL_GET_PERSONS, json=dict(iin=iin))
+    def update_person(self, p: Person):
+        """Заполняет пустой или обновляет существующий Person"""
+        rv = self.s.post(self.url + self.URL_GET_PERSONS, json=dict(iin=p.iin))
         data = self.handle_response(rv)
         if data:
-            pi = DMEDPersonInfo()
-
             r = data[0]
             if r.get('birthDate'):
                 r['birthDate'] = datetime.strptime(r['birthDate'], '%Y-%m-%dT%H:%M:%S')
 
-            pi.id = r['id']
-            pi.iin = iin
-            pi.first_name = r.get('firstName')
-            pi.second_name = r.get('secondName')
-            pi.last_name = r.get('lastName')
-            pi.full_name = r.get('fullName')
-            pi.birth_date = r.get('birthDate')
-            pi.sex_id = r.get('sexID')
-            pi.nationality_id = r.get('nationalityID')
-            pi.citizenship_id = r.get('citizenshipID')
-            pi.rpn_id = r.get('rpnID')
-            pi.master_data_id = r.get('masterDataID')
-            return pi
+            p.dmed_id = r['id']
+            p.first_name = r.get('firstName') or p.first_name
+            p.second_name = r.get('secondName') or p.second_name
+            p.last_name = r.get('lastName') or p.last_name
+            p.full_name = r.get('fullName') or p.full_name
+            p.birth_date = r.get('birthDate') or p.birth_date
+            sex_id = r.get('sexID')
+            if sex_id:
+                p.sex = p.Sex.FEMALE if sex_id in [2, 4, 6] else p.Sex.MALE
+            # p.nationality = r.get('nationalityID')
+            # p.citizenship = r.get('citizenshipID')
+            p.dmed_rpn_id = r.get('rpnID')
+            p.dmed_master_data_id = r.get('masterDataID')
+            return p
 
-    def get_markers(self, p: DMEDPersonInfo):
-        rv = self.s.post(self.url + self.URL_GET_MARKERS, json=dict(personID=p.id, limit=1024))
-        return self.handle_response(rv)['data']
+    def update_person_markers(self, p: Person):
+        """Добавляет недобавленные маркеры к Person (с автосохранением)"""
+        rv = self.s.post(self.url + self.URL_GET_MARKERS, json=dict(personID=p.dmed_id, limit=1024))
+        d = self.handle_response(rv)['data']
+        for marker in d:
+            try:
+                m = Marker.objects.get(id=marker['markerID'])
+            except Marker.DoesNotExist:
+                p.markers.create(id=marker['markerID'], name=marker['markerName'])
+            else:
+                if not p.markers.exists(id=marker['markerID']):
+                    p.markers.add(m)

@@ -11,72 +11,20 @@ class BaseModel(models.Model):
     add_date = f.DateTimeField(auto_now=timezone.now)
 
 
-class Countries(models.TextChoices):
-    KZ = 'KZ', 'Казахстан'
-    RU = 'RU', 'Россия'
-    CN = 'CN', 'Китай'
-    UZ = 'UZ', 'Узбекистан'
-    KR = 'KR', 'Киргизия'
-    TRK = 'TRK', 'Туркменистан'
+class Country(BaseModel):
+    code = f.CharField(max_length=3, primary_key=True)
+    name = f.CharField(max_length=256)
 
 
 class Region(BaseModel):
     """Регион страны"""
     name = f.TextField()
-    country = f.CharField(max_length=10, choices=Countries.choices, default=Countries.KZ)
+    country = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True)
     dmed_url = f.TextField(null=True, blank=True)  # для казахстанских регионов
     dmed_priority = f.IntegerField(default=0)  # 0 - самый высокий
 
     def __str__(self):
         return self.name
-
-
-# class Place(BaseModel):
-#     region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
-#     address = f.TextField(null=True, blank=True)
-#     contact_number = f.TextField(null=True, blank=True)
-#
-#     def __str__(self):
-#         return f'{self.address} ({self.region})'
-
-
-class DMEDPersonInfo(BaseModel):
-    class Sex(models.IntegerChoices):
-        MALE_XIX = 1
-        FEMALE_XIX = 2
-        MALE_XX = 3
-        FEMALE_XX = 4
-        MALE_XXI = 5
-        FEMALE_XXI = 6
-
-    iin = f.CharField(max_length=32, primary_key=True)
-    id = f.BigIntegerField()
-
-    first_name = f.TextField(null=True, blank=True)
-    second_name = f.TextField(null=True, blank=True)
-    last_name = f.TextField(null=True, blank=True)
-    full_name = f.TextField(null=True, blank=True)
-    sex_id = f.IntegerField(choices=Sex.choices, null=True, blank=True)
-    birth_date = f.DateField(null=True, blank=True)
-    nationality_id = f.IntegerField(null=True, blank=True)
-    citizenship_id = f.IntegerField(null=True, blank=True)
-    rpn_id = f.BigIntegerField(null=True, blank=True)
-    master_data_id = f.IntegerField(null=True, blank=True)
-
-    def __str__(self):
-        return f'{self.id} ({self.iin})'
-
-
-class DMEDPersonMarker(BaseModel):
-    class Meta:
-        unique_together = (('marker_id', 'person'),)
-
-    marker_id = f.IntegerField()
-    name = f.CharField(max_length=500)
-    person = models.ForeignKey(DMEDPersonInfo, on_delete=models.CASCADE, related_name='markers')
-
-    def __str__(self):
-        return f'<{self.person}> {self.marker_id} {self.name}'
 
 
 class Person(BaseModel):
@@ -89,7 +37,7 @@ class Person(BaseModel):
     # обязательные
     full_name = f.CharField('полное имя', max_length=300)
     sex = f.CharField('пол', max_length=10, choices=Sex.choices, help_text='M/F - муж/жен')
-    birth_date = f.DateField('дата рождения', help_text='YYY-MM-DD')
+    birth_date = f.DateField('дата рождения', help_text='YYYY-MM-DD')
 
     # опциональные
     iin = f.CharField('ИИН', max_length=32, null=True, blank=True, unique=True)
@@ -100,40 +48,35 @@ class Person(BaseModel):
     residence_place = f.CharField('место проживания', max_length=512, null=True, blank=True)
     study_place = f.CharField('место учебы', max_length=512, null=True, blank=True)
     working_place = f.CharField('место работы', max_length=512, null=True, blank=True)
-    citizenship = f.CharField('гражданство', max_length=256, null=True, blank=True, help_text='гражданин какой страны?')
+    citizenship = models.ForeignKey(Country, on_delete=models.SET_NULL, null=True, blank=True, help_text='гражданин какой страны?')
     had_contact_with_infected = f.BooleanField('имел контакт с инфицированным', null=True, blank=True)
     been_abroad_last_month = f.BooleanField('был за рубежом последний месяц', null=True, blank=True)
     extra = f.TextField('дополнительно', null=True, blank=True)
 
-    # данные конкретной системы
-    dmed_info = models.OneToOneField(DMEDPersonInfo, on_delete=models.SET_NULL, null=True, blank=True)
+    # данные DMED
+    dmed_id = f.BigIntegerField('ID в DMED', null=True, blank=True)
+    dmed_rpn_id = f.BigIntegerField(null=True, blank=True)
+    dmed_master_data_id = f.BigIntegerField(null=True, blank=True)
+    dmed_region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f'{self.full_name} ({self.iin})'
 
     def save(self, *args, **kwargs):
-        self.iin = self.iin or None
+        self.iin = self.iin or None  # против пустых строк
         fio = (self.first_name, self.second_name, self.last_name)
         if not self.full_name and any(fio):
             self.full_name = ' '.join((v for v in fio if v))
         return super(Person, self).save(*args, **kwargs)
 
-    def dmed_update(self, r: DMEDPersonInfo):
-        if r.iin:
-            self.iin = r.iin
-        if r.full_name:
-            self.full_name = r.full_name
-        if r.first_name:
-            self.first_name = r.first_name
-        if r.second_name:
-            self.second_name = r.second_name
-        if r.last_name:
-            self.last_name = r.last_name
-        if r.sex_id:
-            self.sex = self.Sex.FEMALE if r.sex_id in [r.Sex.FEMALE_XIX, r.Sex.FEMALE_XX, r.Sex.FEMALE_XXI] else self.Sex.MALE
-        if r.birth_date:
-            self.birth_date = r.birth_date
-        self.dmed_info = r
+
+class Marker(BaseModel):
+    id = f.IntegerField(primary_key=True)
+    name = f.CharField(max_length=512)
+    persons = models.ManyToManyField(Person, related_name='markers', blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 # class ForeignVisit(BaseModel):
