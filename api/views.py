@@ -10,6 +10,19 @@ from core.service import DMEDService
 from . import serializers as ss
 
 
+class DjangoStrictModelPermissions(permissions.DjangoModelPermissions):
+    """с проверкой на разрешение на просмотр модели"""
+    perms_map = {
+        'GET': ['%(app_label)s.view_%(model_name)s'],
+        'OPTIONS': [],
+        'HEAD': [],
+        'POST': ['%(app_label)s.add_%(model_name)s'],
+        'PUT': ['%(app_label)s.change_%(model_name)s'],
+        'PATCH': ['%(app_label)s.change_%(model_name)s'],
+        'DELETE': ['%(app_label)s.delete_%(model_name)s'],
+    }
+
+
 class InspectorDetail(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -37,7 +50,7 @@ class PersonViewSet(viewsets.ModelViewSet):
     """Люди"""
     queryset = Person.objects.all().order_by('-add_date')
     serializer_class = ss.PersonSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['iin']
     search_fields = ['^full_name']
@@ -47,7 +60,7 @@ class DMEDPersonInfoViewSet(viewsets.ReadOnlyModelViewSet):
     """Данные о людях в dmed"""
     queryset = DMEDPersonInfo.objects.all().order_by('-add_date')
     serializer_class = ss.DMEDPersonInfoSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
 
     def retrieve(self, request, *args, **kwargs):
         try:
@@ -85,7 +98,7 @@ class CheckpointPassViewSet(viewsets.ModelViewSet):
     """запись о прохождении пропускного пункта"""
     queryset = CheckpointPass.objects.all().order_by('-add_date')
     serializer_class = ss.CheckPointPassSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
 
 
 class CheckpointViewSet(viewsets.ModelViewSet):
