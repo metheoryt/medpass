@@ -15,6 +15,9 @@ class Country(BaseModel):
     code = f.CharField(max_length=3, primary_key=True)
     name = f.CharField(max_length=256)
 
+    def __str__(self):
+        return self.name
+
 
 class Region(BaseModel):
     """Регион страны"""
