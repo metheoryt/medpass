@@ -28,6 +28,7 @@ class DMEDService:
             self.token = token
         elif not self.token:
             self.token = self.obtain_token()
+        self.s.headers['Authorization'] = f'Bearer {self.token}'
 
     @property
     def token(self):
@@ -36,7 +37,6 @@ class DMEDService:
     @token.setter
     def token(self, value):
         cache.set('dmed_token', value, 60 * 60)
-        self.s.headers['Authorization'] = f'Bearer {value}'
 
     def obtain_token(self):
         rv = requests.post(url=self.url + self.URL_GET_TOKEN, json=dict(
@@ -48,9 +48,9 @@ class DMEDService:
     def handle_response(self, rv):
         data = rv.json()
         if isinstance(data, dict) and 'Code' in data:
-            raise BadGateway(f"DMED gateway error: {data.get('Message')}")
+            raise BadGateway(f"DMED gateway error - {data.get('Message')!r}")
         elif isinstance(data, dict) and 'message' in data:
-            raise BadGateway(f"DMED gateway error: {data.get('message')}")
+            raise BadGateway(f"DMED gateway error - {data.get('message')!r}")
         return data
 
     def update_person(self, p: Person):
