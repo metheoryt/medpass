@@ -6,7 +6,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
-from core.models import Person, CheckpointPass, Checkpoint, Region, User, Marker
+from core.models import Person, CheckpointPass, Checkpoint, Region, User, Marker, Country
 from core.service import DMEDService
 from . import serializers as ss
 from django.db.models import Q
@@ -113,16 +113,6 @@ class PersonViewSet(viewsets.ModelViewSet):
                 del d[f]
         return super(PersonViewSet, self).perform_update(serializer)
 
-# class DMEDPersonInfoViewSet(viewsets.ReadOnlyModelViewSet):
-#     """Данные о людях в dmed"""
-#     queryset = DMEDPersonInfo.objects.all().order_by('-add_date')
-#     serializer_class = ss.DMEDPersonInfoSerializer
-#     permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
-#
-#     def retrieve(self, request, *args, **kwargs):
-#         try:
-#             return super(DMEDPersonInfoViewSet, self).retrieve(request, *args, **kwargs)
-#         except Http404:
 
 class PersonMarkerViewSet(viewsets.ModelViewSet):
     """Маркеры"""
@@ -141,24 +131,23 @@ class CheckpointPassViewSet(viewsets.ModelViewSet):
 class CheckpointViewSet(viewsets.ModelViewSet):
     queryset = Checkpoint.objects.all().order_by('-add_date')
     serializer_class = ss.CheckPointSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.DjangoModelPermissions]
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['region']
     search_fields = ['^name', '^region__name']
 
 
-# class PlaceViewSet(viewsets.ModelViewSet):
-#     queryset = Place.objects.all().order_by('-add_date')
-#     serializer_class = ss.PlaceSerializer
-#     permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
-#     filter_backends = [DjangoFilterBackend, SearchFilter]
-#     filterset_fields = ['region']
-#     search_fields = ['^address']
-
-
 class RegionViewSet(viewsets.ModelViewSet):
     queryset = Region.objects.all().order_by('-add_date')
     serializer_class = ss.RegionSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.DjangoModelPermissions]
+    permission_classes = [permissions.DjangoModelPermissions]
     filter_backends = [SearchFilter]
     search_fields = ['^name']
+
+
+class CountryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Country.objects.all().order_by('id')
+    serializer_class = ss.CountrySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [SearchFilter]
+    search_fields = ['$name']

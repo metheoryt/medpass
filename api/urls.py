@@ -12,6 +12,7 @@ router.register(r'checkpoint-pass', views.CheckpointPassViewSet)
 router.register(r'checkpoint', views.CheckpointViewSet)
 router.register(r'marker', views.PersonMarkerViewSet)
 router.register(r'region', views.RegionViewSet)
+router.register(r'country', views.CountryViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.

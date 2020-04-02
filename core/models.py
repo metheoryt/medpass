@@ -12,7 +12,7 @@ class BaseModel(models.Model):
 
 
 class Country(BaseModel):
-    code = f.CharField(max_length=3, primary_key=True)
+    id = f.BigIntegerField(primary_key=True)
     name = f.CharField(max_length=256)
 
     def __str__(self):

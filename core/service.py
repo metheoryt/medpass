@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import APIException, status
 
-from core.models import Person, Marker
+from core.models import Person, Marker, Country
 
 
 class BadGateway(APIException):
@@ -72,7 +72,13 @@ class DMEDService:
             if sex_id:
                 p.sex = p.Sex.FEMALE if sex_id in [2, 4, 6] else p.Sex.MALE
             # p.nationality = r.get('nationalityID')
-            # p.citizenship = r.get('citizenshipID')
+
+            if r.get('citizenshipID') is not None:
+                try:
+                    p.citizenship = Country.objects.get(r['citizenshipID'])
+                except Country.DoesNotExist:
+                    pass
+
             p.dmed_rpn_id = r.get('rpnID')
             p.dmed_master_data_id = r.get('masterDataID')
             return p

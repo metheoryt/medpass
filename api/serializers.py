@@ -28,6 +28,12 @@ class RegionSerializer(serializers.ModelSerializer):
         fields = ['id', 'country', 'name']
 
 
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Country
+        fields = ['id', 'name']
+
+
 class CheckPointPassSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CheckpointPass
