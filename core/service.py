@@ -75,7 +75,7 @@ class DMEDService:
 
             if r.get('citizenshipID') is not None:
                 try:
-                    p.citizenship = Country.objects.get(r['citizenshipID'])
+                    p.citizenship = Country.objects.get(pk=r['citizenshipID'])
                 except Country.DoesNotExist:
                     pass
 
