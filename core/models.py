@@ -12,8 +12,12 @@ class BaseModel(models.Model):
 
 
 class Country(BaseModel):
+    class Meta:
+        ordering = ['-priority', 'name']
+
     id = f.BigIntegerField(primary_key=True)
     name = f.CharField(max_length=256)
+    priority = f.IntegerField(default=0)
 
     def __str__(self):
         return self.name

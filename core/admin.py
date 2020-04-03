@@ -1,9 +1,25 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from . import models
+from . import models, forms
+from django.utils.translation import gettext_lazy as _
 
 
-admin.site.register(models.User, UserAdmin)
+class CustomUserAdmin(UserAdmin):
+    add_form = forms.UserCreationForm
+    form = forms.UserChangeForm
+    list_display = UserAdmin.list_display + ('checkpoint', )
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
+        (_('Permissions'), {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+        (_('Inspector profile'), {'fields': ('checkpoint', )})
+    )
+
+
+admin.site.register(models.User, CustomUserAdmin)
 admin.site.register(models.Checkpoint)
 admin.site.register(models.CheckpointPass)
 admin.site.register(models.Region)
