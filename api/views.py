@@ -146,7 +146,7 @@ class RegionViewSet(viewsets.ModelViewSet):
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Country.objects.all()
+    queryset = Country.objects.distinct('name', 'priority')
     serializer_class = ss.CountrySerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [SearchFilter]
