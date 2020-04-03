@@ -84,7 +84,7 @@ class PersonViewSet(viewsets.ModelViewSet):
             if p.dmed_id:
                 # инфа уже была получена, не делаем внешний запрос
                 return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
-        except Person.DoesNotExists:
+        except Person.DoesNotExist:
             p: Person = Person()
             p.iin = kwargs['pk']
 
