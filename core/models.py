@@ -105,7 +105,7 @@ class Checkpoint(BaseModel):
 
 class User(auth_models.AbstractUser):
     """Пользователь проекта"""
-    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.SET_NULL, null=True)
+    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.SET_NULL, null=True, blank=True)
     """кпп инспектора"""
 
     def __str__(self):
