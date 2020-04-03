@@ -19,7 +19,7 @@ class PersonSerializer(serializers.ModelSerializer):
         ]
 
     url = serializers.HyperlinkedIdentityField(view_name='person-detail', read_only=True)
-    markers = serializers.PrimaryKeyRelatedField(many=True, queryset=models.Marker.objects.all())
+    markers = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
 
 class RegionSerializer(serializers.ModelSerializer):
