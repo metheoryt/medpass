@@ -10,6 +10,7 @@ from core.models import Person, CheckpointPass, Checkpoint, Region, User, Marker
 from core.service import DMEDService
 from . import serializers as ss
 from django.db.models import Q
+from core.validators import is_iin
 
 
 class DjangoStrictModelPermissions(permissions.DjangoModelPermissions):
@@ -54,7 +55,7 @@ class PersonViewSet(viewsets.ModelViewSet):
     serializer_class = ss.PersonSerializer
     permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['birth_date']
+    filterset_fields = ['birth_date', 'iin']
     search_fields = ['$full_name']
 
     def get_object(self):
@@ -73,36 +74,43 @@ class PersonViewSet(viewsets.ModelViewSet):
         return obj
 
     def retrieve(self, request, *args, **kwargs):
+        if not is_iin(kwargs['pk']):
+            return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
+
+        # это ИИН
+        # находим существующую или создаём свежую анкету
         try:
-            # пытаемся найти существующий
-            return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
-        except Http404:
-            # ищем в dmed и сохраняем
-            # формируем список регионов, по которым будем искать
-            u: User = request.user
-            regions = []
-            q = Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority')
-            if u.checkpoint:
-                q = q.exclude(id=u.checkpoint.region.id)
-                regions.append(u.checkpoint.region)  # регион КПП будет запрошен в первую очередь
-            regions.extend(q)
-
-            # создаём свежий объект
-            p = Person()
+            p: Person = Person.objects.get(iin=kwargs['pk'])
+            if p.dmed_id:
+                # инфа уже была получена, не делаем внешний запрос
+                return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
+        except Person.DoesNotExists:
+            p: Person = Person()
             p.iin = kwargs['pk']
-            # ищем в цикле пока не найдём
-            for region in regions:
-                dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
-                p = dmed.update_person(p)
 
-                if p:
-                    # если апдейт успешен, сохраняем анкету
-                    p.dmed_region = region  # запомним откуда получили информацию
-                    p.save()
-                    dmed.update_person_markers(p)
-                    break
-            # возвращаем как есть
-            return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
+        # ищем в dmed и сохраняем
+        # формируем список регионов, по которым будем искать
+        u: User = request.user
+        regions = []
+        q = Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority')
+        if u.checkpoint:
+            q = q.exclude(id=u.checkpoint.region.id)
+            regions.append(u.checkpoint.region)  # регион КПП будет запрошен в первую очередь
+        regions.extend(q)
+
+        # ищем в цикле пока не найдём инфу о нём
+        for region in regions:
+            dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
+            updated = dmed.update_person(p)
+            if updated:
+                # если апдейт успешен, сохраняем анкету
+                p.dmed_region = region  # запомним откуда получили информацию
+                p.save()
+                dmed.update_person_markers(p)
+                break
+
+        # возвращаем как есть
+        return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
 
     def perform_update(self, serializer):
         # запрещаем обновление базовых данных

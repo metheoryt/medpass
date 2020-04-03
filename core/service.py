@@ -81,7 +81,8 @@ class DMEDService:
 
             p.dmed_rpn_id = r.get('rpnID')
             p.dmed_master_data_id = r.get('masterDataID')
-            return p
+            return True
+        return False
 
     def update_person_markers(self, p: Person):
         """Добавляет недобавленные маркеры к Person (с автосохранением)"""
