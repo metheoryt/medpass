@@ -117,7 +117,7 @@ class PersonViewSet(viewsets.ModelViewSet):
         d = serializer.validated_data
         i = serializer.instance
         for f in ['full_name', 'sex', 'birth_date', 'iin', 'first_name', 'second_name', 'last_name']:
-            if getattr(i, f) and d.get(f):
+            if getattr(i, f) and f in d:  # если в модели уже есть что-то в этом поле - запрещаем его обновление
                 del d[f]
         return super(PersonViewSet, self).perform_update(serializer)
 

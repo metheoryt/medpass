@@ -1,3 +1,9 @@
+from django.core.exceptions import ValidationError
+
+
+def validate_iin(value):
+    if not is_iin(value):
+        raise ValidationError(f'{value} is not valid IIN', params={'value': value})
 
 
 def is_iin(v):

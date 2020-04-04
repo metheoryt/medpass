@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import fields as f
 from django.contrib.auth import models as auth_models
 from django.utils import timezone
+from .validators import validate_iin
 
 
 class BaseModel(models.Model):
@@ -47,7 +48,7 @@ class Person(BaseModel):
     birth_date = f.DateField('дата рождения', help_text='YYYY-MM-DD')
 
     # опциональные
-    iin = f.CharField('ИИН', max_length=32, null=True, blank=True, unique=True)
+    iin = f.CharField('ИИН', max_length=32, null=True, blank=True, unique=True, validators=[validate_iin])
     last_name = f.CharField('фамилия', max_length=100, null=True, blank=True)
     first_name = f.TextField('имя', max_length=100, null=True, blank=True)
     second_name = f.TextField('отчество', max_length=100, null=True, blank=True)
