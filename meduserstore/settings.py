@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,6 +27,18 @@ SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG') == '1'
+
+
+if os.environ.get('SENTRY_DSN') and not DEBUG:
+    sentry_sdk.init(
+        dsn=os.environ['SENTRY_DSN'],
+        environment=os.environ['ENV'],
+        integrations=[DjangoIntegration()],
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True
+    )
+
 
 ALLOWED_HOSTS = []
 
@@ -69,6 +84,39 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 ADMINS = [
     ('Maxim', 'mromanyuk91@gmail.com')
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    # определения форматтеров
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {process:d}-{thread:d} {name}: {message}',
+            'style': '{',
+        }
+    },
+    # определения обработчиков логов (им назначаются фильтры и форматтеры)
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        },
+    },
+    # определения логгеров (им назначаются обработчики, уровень логгирования, переопределяются фильтры)
+    'loggers': {
+        'api': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False
+        },
+        'core': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False
+        }
+    }
+}
+
 
 CACHES = {
     'default': {
@@ -162,7 +210,7 @@ STATIC_URL = '/static/'
 import django_heroku
 import dj_database_url
 
-django_heroku.settings(locals(), databases=False)
+django_heroku.settings(locals(), databases=False, logging=False)
 
 # Configure Django for DATABASE_URL environment variable.
 DATABASES['default'] = dj_database_url.config()

@@ -13,6 +13,7 @@ python-dotenv = "*"
 gunicorn = "*"
 requests = "*"
 django-filter = "*"
+sentry-sdk = "*"
 
 [requires]
 python_version = "3.7"

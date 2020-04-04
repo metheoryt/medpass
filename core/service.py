@@ -6,6 +6,10 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import APIException, status
 
 from core.models import Person, Marker, Country
+import logging
+
+
+log = logging.getLogger(__name__)
 
 
 class BadGateway(APIException):
@@ -39,6 +43,7 @@ class DMEDService:
         cache.set('dmed_token', value, 60 * 60)
 
     def obtain_token(self):
+        log.info('requesting new auth token for dmed')
         rv = requests.post(url=self.url + self.URL_GET_TOKEN, json=dict(
             systemUsername=self.username,
             systemPassword=self.password
@@ -47,6 +52,7 @@ class DMEDService:
 
     def handle_response(self, rv):
         data = rv.json()
+        log.info(f'dmed rs: {data}')
         if isinstance(data, dict) and 'Code' in data:
             raise BadGateway(f"DMED gateway error - {data.get('Message')!r}")
         elif isinstance(data, dict) and 'message' in data:
@@ -55,7 +61,12 @@ class DMEDService:
 
     def update_person(self, p: Person):
         """Заполняет пустой или обновляет существующий Person"""
-        rv = self.s.post(self.url + self.URL_GET_PERSONS, json=dict(iin=p.iin))
+        url = self.url + self.URL_GET_PERSONS
+        payload = dict(iin=p.iin)
+
+        log.info(f'dmed person rq: POST {url}: {payload}')
+
+        rv = self.s.post(url, json=payload)
         data = self.handle_response(rv)
         if data:
             r = data[0]
@@ -86,7 +97,10 @@ class DMEDService:
 
     def update_person_markers(self, p: Person):
         """Добавляет недобавленные маркеры к Person (с автосохранением)"""
-        rv = self.s.post(self.url + self.URL_GET_MARKERS, json=dict(personID=p.dmed_id, limit=1024))
+        url = self.url + self.URL_GET_MARKERS
+        payload = dict(personID=p.dmed_id, limit=1024)
+        log.info(f'dmed markers rq: POST {url}: {payload}')
+        rv = self.s.post(url, json=payload)
         d = self.handle_response(rv)['data']
         for marker in d:
             try:
