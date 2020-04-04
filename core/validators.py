@@ -1,7 +1,7 @@
 
 
 def is_iin(v):
-    if not isinstance(v, str) and len(v) == 12 and not v.isdigit():
+    if not all((isinstance(v, str), len(v) == 12, v.isdigit())):
         # невалидная форма
         return False
     if v[4] in '456':
