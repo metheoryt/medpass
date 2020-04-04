@@ -108,5 +108,5 @@ class DMEDService:
             except Marker.DoesNotExist:
                 p.markers.create(id=marker['markerID'], name=marker['markerName'])
             else:
-                if not p.markers.exists(id=marker['markerID']):
+                if not p.markers.filter(id=marker['markerID']).exists():
                     p.markers.add(m)
