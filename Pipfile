@@ -14,6 +14,7 @@ gunicorn = "*"
 requests = "*"
 django-filter = "*"
 sentry-sdk = "*"
+django-cors-headers = "*"
 
 [requires]
 python_version = "3.7"

@@ -19,5 +19,6 @@ router.register(r'country', views.CountryViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('inspector', views.InspectorDetail.as_view()),
-    path('auth/', include('rest_framework.urls', namespace='rest_framework'))
+    path('auth/', include('rest_framework.urls', namespace='rest_framework')),
+    path('webhook/webcam', views.webcam_webhook)
 ]

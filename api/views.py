@@ -5,12 +5,22 @@ from rest_framework import viewsets, permissions, views, status
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from django.http import HttpResponse
 
 from core.models import Person, CheckpointPass, Checkpoint, Region, User, Marker, Country
 from core.service import DMEDService
 from . import serializers as ss
 from django.db.models import Q
 from core.validators import is_iin
+import logging
+
+
+log = logging.getLogger(__name__)
+
+
+def webcam_webhook(request):
+    log.info(f'webcam rq: {request.body[:10_000]}')
+    return HttpResponse()
 
 
 class DjangoStrictModelPermissions(permissions.DjangoModelPermissions):
