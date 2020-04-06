@@ -13,7 +13,7 @@ router.register(r'checkpoint', views.CheckpointViewSet)
 router.register(r'marker', views.PersonMarkerViewSet)
 router.register(r'region', views.RegionViewSet)
 router.register(r'country', views.CountryViewSet)
-router.register(r'inspector/checkpoint/passes', views.InspectorCheckpointPassViewSet)
+router.register(r'inspector/checkpoint/passes', views.InspectorCheckpointPassViewSet, basename='inspector-checkpoint-pass')
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.

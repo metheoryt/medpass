@@ -155,13 +155,14 @@ class CheckpointPassViewSet(viewsets.ModelViewSet):
 
 class InspectorCheckpointPassViewSet(viewsets.ModelViewSet):
     """записи о прохождении текущего пропускного пункта"""
-    class LargeResultsSetPagination(PageNumberPagination):
+    class Last3SetPagination(PageNumberPagination):
         page_size = 3
         page_size_query_param = 'page_size'
         max_page_size = 100
 
     serializer_class = ss.CheckPointPassSerializer
     permission_classes = [DjangoStrictModelPermissions]
+    pagination_class = Last3SetPagination
 
     def get_queryset(self):
         return CheckpointPass.objects.filter(checkpoint=self.request.user.checkpoint).order_by('-add_date')
