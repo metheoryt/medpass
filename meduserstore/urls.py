@@ -17,10 +17,7 @@ from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import path
 from django.urls import include
-
-
-def index(request):
-    return redirect('api/')
+# import app.views
 
 
 def error(request):
@@ -28,7 +25,7 @@ def error(request):
 
 
 urlpatterns = [
-    path('', index),
+#     path('', app.views.index),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('error', error)

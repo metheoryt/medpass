@@ -13,6 +13,7 @@ router.register(r'checkpoint', views.CheckpointViewSet)
 router.register(r'marker', views.PersonMarkerViewSet)
 router.register(r'region', views.RegionViewSet)
 router.register(r'country', views.CountryViewSet)
+router.register(r'inspector/checkpoint/passes', views.InspectorCheckpointPassViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
@@ -20,5 +21,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('inspector', views.InspectorDetail.as_view()),
     path('auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('webhook/webcam', views.webcam_webhook)
+    path('webhook/webcam', views.WebcamWebhook.as_view())
 ]

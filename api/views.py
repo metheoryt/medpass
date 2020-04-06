@@ -1,28 +1,29 @@
+import logging
+
 from django.conf import settings
-from django.http import Http404
-from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, views, status
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from django.http import HttpResponse
+from rest_framework.views import APIView
 
 from core.models import Person, CheckpointPass, Checkpoint, Region, User, Marker, Country
 from core.service import DMEDService
-from . import serializers as ss
-from django.db.models import Q
 from core.validators import is_iin
-import logging
-
+from . import serializers as ss
 
 log = logging.getLogger(__name__)
 
 
-@csrf_exempt
-def webcam_webhook(request):
-    log.info(f'webcam rq: {request.body[:10_000]}')
-    return HttpResponse()
+class WebcamWebhook(APIView):
+
+    def get(self, request, format=None):
+        log.info(f'webcam rq: {request.body[:10_000]}')
+        return HttpResponse()
 
 
 class DjangoStrictModelPermissions(permissions.DjangoModelPermissions):
@@ -142,10 +143,24 @@ class PersonMarkerViewSet(viewsets.ModelViewSet):
 
 
 class CheckpointPassViewSet(viewsets.ModelViewSet):
-    """запись о прохождении пропускного пункта"""
+    """записи о прохождении пропускного пункта"""
     queryset = CheckpointPass.objects.all().order_by('-add_date')
     serializer_class = ss.CheckPointPassSerializer
     permission_classes = [DjangoStrictModelPermissions]
+
+
+class InspectorCheckpointPassViewSet(viewsets.ModelViewSet):
+    """записи о прохождении текущего пропускного пункта"""
+    class LargeResultsSetPagination(PageNumberPagination):
+        page_size = 3
+        page_size_query_param = 'page_size'
+        max_page_size = 100
+
+    serializer_class = ss.CheckPointPassSerializer
+    permission_classes = [DjangoStrictModelPermissions]
+
+    def get_queryset(self):
+        return CheckpointPass.objects.filter(checkpoint=self.request.user.checkpoint).order_by('-add_date')
 
 
 class CheckpointViewSet(viewsets.ModelViewSet):

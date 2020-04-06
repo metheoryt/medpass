@@ -57,7 +57,8 @@ INSTALLED_APPS = [
     'django_filters',
     'corsheaders',
     'core.apps.CoreConfig',
-    'api.apps.ApiConfig'
+    'api.apps.ApiConfig',
+    # 'app.apps.AppConfig',
 ]
 
 # django.contrib.auth
