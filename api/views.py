@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.http import Http404
+from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, permissions, views, status
 from rest_framework.filters import SearchFilter
@@ -18,6 +19,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
+@csrf_exempt
 def webcam_webhook(request):
     log.info(f'webcam rq: {request.body[:10_000]}')
     return HttpResponse()
