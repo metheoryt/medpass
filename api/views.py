@@ -15,6 +15,8 @@ from core.models import Person, CheckpointPass, Checkpoint, Region, User, Marker
 from core.service import DMEDService
 from core.validators import is_iin
 from . import serializers as ss
+import threading
+
 
 log = logging.getLogger(__name__)
 
@@ -102,28 +104,30 @@ class PersonViewSet(viewsets.ModelViewSet):
             p.iin = kwargs['pk']
 
         # ищем в dmed и сохраняем
-        # формируем список регионов, по которым будем искать
-        u: User = request.user
-        regions = []
-        q = Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority')
-        if u.checkpoint:
-            q = q.exclude(id=u.checkpoint.region.id)
-            regions.append(u.checkpoint.region)  # регион КПП будет запрошен в первую очередь
-        regions.extend(q)
+        # запускаем параллельно
+        threads = []
+        for region in Region.objects.filter(dmed_url__isnull=False):
+            t = threading.Thread(target=self.update_person_from_damu, args=(p, region))
+            threads.append(t)
+            t.start()
 
-        # ищем в цикле пока не найдём инфу о нём
-        for region in regions:
-            dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
-            updated = dmed.update_person(p)
-            if updated:
-                # если апдейт успешен, сохраняем анкету
-                p.dmed_region = region  # запомним откуда получили информацию
-                p.save()
-                dmed.update_person_markers(p)
-                break
+        # ждём когда все закончат
+        for t in threads:
+            t.join()
 
         # возвращаем как есть
         return super(PersonViewSet, self).retrieve(request, *args, **kwargs)
+
+    @staticmethod
+    def update_person_from_damu(p: Person, region: Region):
+        dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
+        updated = dmed.update_person(p)
+        if updated:
+            # если апдейт успешен, сохраняем анкету
+            p.dmed_region = region  # запомним откуда получили информацию
+            p.save()
+            dmed.update_person_markers(p)
+
 
     def perform_update(self, serializer):
         # запрещаем обновление базовых данных
