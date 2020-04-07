@@ -22,8 +22,9 @@ log = logging.getLogger(__name__)
 
 
 class WebcamWebhook(APIView):
+    permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         log.info(f'webcam rq: {request.body[:10_000]}')
         return HttpResponse()
 
