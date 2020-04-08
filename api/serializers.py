@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from core import models
-from core.models import Region, Person
+from core.models import Region, Person, Country
 
 
 class MarkerSerializer(serializers.ModelSerializer):
@@ -40,6 +40,8 @@ class PersonSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'dmed_id', 'dmed_rpn_id', 'dmed_master_data_id', 'dmed_region', 'temperature'
         ]
+
+    citizenship = serializers.PrimaryKeyRelatedField(queryset=Country.objects.distinct('name', 'priority'))
     iin = serializers.CharField(label='ИИН / ID документа')
     url = serializers.HyperlinkedIdentityField(view_name='person-detail', read_only=True)
     markers = serializers.PrimaryKeyRelatedField(many=True, read_only=True)

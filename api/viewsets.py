@@ -12,6 +12,10 @@ from core.models import Country, Region, Checkpoint, CheckpointPass, Person, CIT
     User
 from core.service import DMEDService
 from core.validators import is_iin
+import logging
+
+
+log = logging.getLogger(__name__)
 
 
 class DjangoStrictModelPermissions(permissions.DjangoModelPermissions):
@@ -156,7 +160,11 @@ class PersonViewSet(viewsets.ModelViewSet):
             p.save()
             dmed.update_person_markers(p)
 
-    def perform_update(self, serializer):  # PUT/POST /api/person/{pk}
+    def update(self, request, *args, **kwargs):
+        log.info(f'rq body: {request.body}')
+        return super(PersonViewSet, self).update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):  # PUT/PATCH /api/person/{pk}
         # запрещаем обновление базовых данных
         d = serializer.validated_data
         i = serializer.instance
@@ -165,7 +173,7 @@ class PersonViewSet(viewsets.ModelViewSet):
                 del d[f]
         return super(PersonViewSet, self).perform_update(serializer)
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer):  # POST /api/person
         serializer.validated_data['doc_id'] = serializer.validated_data.pop('iin', None)
         serializer.save()
 
