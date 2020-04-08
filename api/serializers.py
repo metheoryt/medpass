@@ -41,7 +41,7 @@ class PersonSerializer(serializers.ModelSerializer):
             'dmed_id', 'dmed_rpn_id', 'dmed_master_data_id', 'dmed_region', 'temperature'
         ]
 
-    citizenship = serializers.PrimaryKeyRelatedField(queryset=Country.objects.distinct('name', 'priority'))
+    citizenship = serializers.PrimaryKeyRelatedField(queryset=Country.objects.all())
     iin = serializers.CharField(label='ИИН / ID документа', required=False)
     url = serializers.HyperlinkedIdentityField(view_name='person-detail', read_only=True)
     markers = serializers.PrimaryKeyRelatedField(many=True, read_only=True)

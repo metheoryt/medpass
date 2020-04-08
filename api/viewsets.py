@@ -44,7 +44,7 @@ class InspectorViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, views
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     """Все страны"""
-    queryset = Country.objects.distinct('name', 'priority')
+    queryset = Country.objects.all()
     serializer_class = ss.CountrySerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [SearchFilter]
