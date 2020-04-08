@@ -67,7 +67,7 @@ class DMEDService:
 
         log.info(f'dmed person rq: POST {url}: {payload}')
 
-        rv = self.s.post(url, json=payload)
+        rv = self.s.post(url, json=payload, timeout=4)
         data = self.handle_response(rv)
         if data:
             r = data[0]
@@ -99,7 +99,7 @@ class DMEDService:
         url = self.url + self.URL_GET_MARKERS
         payload = dict(personID=p.dmed_id, limit=1024)
         log.info(f'dmed markers rq: POST {url}: {payload}')
-        rv = self.s.post(url, json=payload)
+        rv = self.s.post(url, json=payload, timeout=4)
         d = self.handle_response(rv)['data']
         for marker in d:
             p.markers.update_or_create(id=marker['markerID'], defaults={'name': marker['markerName']})

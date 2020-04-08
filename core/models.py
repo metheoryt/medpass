@@ -218,7 +218,7 @@ class CheckpointPass(BaseModel):
         return ppd.temperature
 
     def __str__(self):
-        return f'{self.persons} @ {self.checkpoint} {self.source_place} -> {self.destination_place}'
+        return f'{[v.doc_id for v in self.persons.all()]} @ {self.checkpoint} {self.source_place} -> {self.destination_place}'
 
 
 class PersonPassData(BaseModel):
