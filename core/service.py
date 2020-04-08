@@ -63,7 +63,7 @@ class DMEDService:
     def update_person(self, p: Person):
         """Заполняет пустой или обновляет существующий Person"""
         url = self.url + self.URL_GET_PERSONS
-        payload = dict(iin=p.iin)
+        payload = dict(iin=p.doc_id)
 
         log.info(f'dmed person rq: POST {url}: {payload}')
 
@@ -86,10 +86,8 @@ class DMEDService:
             # p.nationality = r.get('nationalityID')
 
             if r.get('citizenshipID') is not None:
-                try:
-                    p.citizenship = Country.objects.get(pk=r['citizenshipID'])
-                except Country.DoesNotExist:
-                    pass
+                country, created = Country.objects.get_or_create(pk=r['citizenshipID'])
+                p.citizenship = country
 
             p.dmed_rpn_id = r.get('rpnID')
             p.dmed_master_data_id = r.get('masterDataID')
@@ -104,10 +102,4 @@ class DMEDService:
         rv = self.s.post(url, json=payload)
         d = self.handle_response(rv)['data']
         for marker in d:
-            try:
-                m = Marker.objects.get(id=marker['markerID'])
-            except Marker.DoesNotExist:
-                p.markers.create(id=marker['markerID'], name=marker['markerName'])
-            else:
-                if not p.markers.filter(id=marker['markerID']).exists():
-                    p.markers.add(m)
+            p.markers.update_or_create(id=marker['markerID'], defaults={'name': marker['markerName']})

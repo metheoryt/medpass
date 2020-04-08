@@ -15,6 +15,7 @@ requests = "*"
 django-filter = "*"
 sentry-sdk = "*"
 django-cors-headers = "*"
+drf-nested-routers = "*"
 
 [requires]
 python_version = "3.7"

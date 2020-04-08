@@ -1,25 +1,21 @@
-from django.urls import path
-from django.urls import include
-
+from django.urls import include, path
 from rest_framework import routers
-from . import views
 
-router = routers.DefaultRouter()
-router.register(r'person', views.PersonViewSet)
-# router.register(r'foreign-visit', views.ForeignVisitViewSet)
-# router.register(r'dmed-info', views.DMEDPersonInfoViewSet)
-router.register(r'checkpoint-pass', views.CheckpointPassViewSet)
-router.register(r'checkpoint', views.CheckpointViewSet)
-router.register(r'marker', views.PersonMarkerViewSet)
-router.register(r'region', views.RegionViewSet)
-router.register(r'country', views.CountryViewSet)
-router.register(r'inspector/checkpoint/passes', views.InspectorCheckpointPassViewSet, basename='inspector-checkpoint-pass')
+from . import views, viewsets
 
-# Wire up our API using automatic URL routing.
-# Additionally, we include login URLs for the browsable API.
+r = routers.DefaultRouter()
+
+r.register(r'person', viewsets.PersonViewSet)
+r.register(r'checkpoint-pass', viewsets.CheckpointPassViewSet)
+r.register(r'checkpoint', viewsets.CheckpointViewSet)
+r.register(r'marker', viewsets.PersonMarkerViewSet)
+r.register(r'region', viewsets.RegionViewSet)
+r.register(r'country', viewsets.CountryViewSet)
+
+
 urlpatterns = [
-    path('', include(router.urls)),
-    path('inspector', views.InspectorDetail.as_view()),
+    path('', include(r.urls)),
+    path('inspector', viewsets.InspectorViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update'})),
     path('auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('webhook/webcam', views.WebcamWebhook.as_view())
+    path('webhook/webcam', views.WebcamWebhook.as_view()),
 ]

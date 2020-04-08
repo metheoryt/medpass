@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from core import models
-from core.models import Region
+from core.models import Region, Person
 
 
 class MarkerSerializer(serializers.ModelSerializer):
@@ -13,11 +13,34 @@ class MarkerSerializer(serializers.ModelSerializer):
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Person
-        fields = '__all__'
-        read_only_fields = [
-            'dmed_id', 'dmed_rpn_id', 'dmed_master_data_id', 'dmed_region'
+        fields = [
+            'id',
+            'iin',
+            'citizenship',
+            'full_name',
+            'sex',
+            'birth_date',
+            'last_name',
+            'first_name',
+            'second_name',
+            'contact_numbers',
+            'residence_place',
+            'study_place',
+            'working_place',
+            'had_contact_with_infected',
+            'been_abroad_last_month',
+            'extra',
+            'dmed_id',
+            'dmed_rpn_id',
+            'dmed_master_data_id',
+            'dmed_region',
+            'url',
+            'markers'
         ]
-
+        read_only_fields = [
+            'dmed_id', 'dmed_rpn_id', 'dmed_master_data_id', 'dmed_region', 'temperature'
+        ]
+    iin = serializers.CharField(label='ИИН / ID документа')
     url = serializers.HyperlinkedIdentityField(view_name='person-detail', read_only=True)
     markers = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
@@ -37,11 +60,23 @@ class CountrySerializer(serializers.ModelSerializer):
 class CheckPointPassSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CheckpointPass
-        fields = ['date', 'person', 'checkpoint',
-                  'source_place', 'destination_place', 'inspector']
-        read_only_fields = ['inspector', 'checkpoint']
+        fields = [
+            'id',
+            'person',  # legacy
+            'source_place',
+            'destination_place',
+            'add_date',
+            'checkpoint',
+            'inspector',
+        ]
+        read_only_fields = ['add_date', 'inspector', 'checkpoint']
+
+    person = serializers.PrimaryKeyRelatedField(queryset=Person.objects.all())
 
     def create(self, validated_data):
+        # legacy: работаем со списком анкет как с одной анкетой
+        # игнорируем температуру
+        validated_data['persons'] = [validated_data.pop('person')]
         instance = super(CheckPointPassSerializer, self).create(validated_data)
         instance.inspector = self.context['request'].user
         instance.checkpoint = instance.inspector.checkpoint
