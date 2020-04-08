@@ -93,7 +93,7 @@ class PersonViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         if is_iin(self.kwargs[self.lookup_field]):
-            filter_kwargs = {'doc_id': self.kwargs['pk'], 'citizenship': CITIZENSHIP_KZ}
+            filter_kwargs = {'doc_id': self.kwargs['pk'], 'citizenship__in': CITIZENSHIPS_KZ}
         else:
             lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
             filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
@@ -131,8 +131,8 @@ class PersonViewSet(viewsets.ModelViewSet):
             threads.append(t)
 
         while threads:
-            # запускаем поиск в 2 потока
-            chunk = threads[:2]
+            # запускаем поиск в 4 потока
+            chunk, threads = threads[:4], threads[4:]
             for t in chunk:
                 t.start()
 
