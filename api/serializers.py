@@ -42,7 +42,7 @@ class PersonSerializer(serializers.ModelSerializer):
         ]
 
     citizenship = serializers.PrimaryKeyRelatedField(queryset=Country.objects.distinct('name', 'priority'))
-    iin = serializers.CharField(label='ИИН / ID документа')
+    iin = serializers.CharField(label='ИИН / ID документа', required=False)
     url = serializers.HyperlinkedIdentityField(view_name='person-detail', read_only=True)
     markers = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
