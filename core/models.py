@@ -94,14 +94,15 @@ class Person(BaseModel):
     @property
     def iin(self):
         """Для обратной совместимости"""
-        return self.doc_id if self.citizenship.id in CITIZENSHIPS_KZ else None
+        return self.doc_id
 
     @iin.setter
     def iin(self, value):
         """Для обратной совместимости"""
-        validate_iin(value)
-        self.doc_id = value
-        self.citizenship = Country.objects.get(pk=CITIZENSHIP_KZ)
+        if value:
+            validate_iin(value)
+            self.doc_id = value
+            self.citizenship = Country.objects.get(pk=CITIZENSHIP_KZ)
 
     @property
     def temperature(self) -> Optional[float]:
