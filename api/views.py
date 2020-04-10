@@ -22,7 +22,7 @@ class WebcamWebhook(APIView):
         if cache.get(body['id']):  # защита от повторных запросов
             return HttpResponse()
 
-        vehicle, created = Vehicle.objects.get_or_create(grnz=pl['number'])
+        vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
         camera, created = Camera.objects.update_or_create(
             id=pl['raw']['event']['origin'],
             defaults={
@@ -34,7 +34,6 @@ class WebcamWebhook(APIView):
         CameraCapture.objects.create(
             id=pl['raw']['event']['uuid'],
             date=pl['raw']['event']['time'],
-            direction=pl['raw']['event']['vehicle']['dir'],
             vehicle=vehicle,
             camera=camera,
             raw_data=body

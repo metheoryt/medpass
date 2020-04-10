@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'core.apps.CoreConfig',
     'api.apps.ApiConfig',
+    'api2.apps.Api2Config',
     # 'app.apps.AppConfig',
 ]
 

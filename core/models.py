@@ -1,7 +1,7 @@
 from typing import Optional
 
 from django.db import models
-from django.db.models import fields as f, Manager
+from django.db.models import fields as f, Manager, constraints
 from django.contrib.auth import models as auth_models
 from django.utils import timezone
 from .validators import validate_iin
@@ -94,7 +94,8 @@ class Person(BaseModel):
     @property
     def iin(self):
         """Для обратной совместимости"""
-        return self.doc_id
+        if self.citizenship.id in CITIZENSHIPS_KZ:
+            return self.doc_id
 
     @iin.setter
     def iin(self, value):
@@ -140,17 +141,10 @@ class User(auth_models.AbstractUser):
         return self.username
 
 
-class Policeman(BaseModel):
-    """Полицейский"""
-    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.SET_NULL, null=True, blank=True, related_name='policemans')
-
-    def __str__(self):
-        return f'{self.id} @ {self.checkpoint}'
-
-
 class Vehicle(BaseModel):
     """Транспорт"""
     grnz = f.CharField(primary_key=True, max_length=20)
+    model = f.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return self.grnz
@@ -163,22 +157,11 @@ class Camera(BaseModel):
     lon = f.FloatField()
     lat = f.FloatField()
     location = f.CharField(max_length=1000)
+    # с каким КПП связана
+    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.CASCADE, null=True, blank=True, related_name='cameras')
 
     def __str__(self):
         return self.location
-
-
-class CameraCapture(BaseModel):
-    """Захват проезжающего мимо камеры транспорта"""
-    id = f.UUIDField(primary_key=True)
-    camera = models.ForeignKey(Camera, on_delete=models.CASCADE)
-    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
-    date = f.DateTimeField()
-    direction = models.CharField(max_length=50)
-    raw_data = f.CharField(max_length=50_000)  # сюда сохраним всё тело запроса
-
-    def __str__(self):
-        return f"{self.vehicle} @ {self.camera} @ {self.date}"
 
 
 class CheckpointPass(BaseModel):
@@ -191,14 +174,13 @@ class CheckpointPass(BaseModel):
         NOT_PASSED = 'not_passed'  # процедура проверки ещё не пройдена
         PASSED = 'passed'  # процедура проверки пройдена
 
-    persons = models.ManyToManyField(Person, through='PersonPassData', related_name='passes')
+    persons = models.ManyToManyField(Person, through='PersonPassData', related_name='passes', blank=True)
     inspector = models.ForeignKey(User, verbose_name='Мединспектор', on_delete=models.SET_NULL, null=True)
     checkpoint = models.ForeignKey(Checkpoint, verbose_name='КПП', on_delete=models.SET_NULL, null=True, blank=True)
     source_place = f.CharField('Исходный пункт', max_length=512, null=True, blank=True)
     destination_place = f.CharField('Пункт назначения', max_length=512, null=True, blank=True)
     direction = f.CharField(max_length=10, choices=Direction.choices, null=True, blank=True)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True, related_name='passes')
-    policeman = models.ForeignKey(Policeman, on_delete=models.SET_NULL, null=True, blank=True)
     status = f.CharField('Статус прохождения', max_length=30, choices=Status.choices, default=Status.NOT_PASSED)
 
     @property
@@ -219,13 +201,31 @@ class CheckpointPass(BaseModel):
         return ppd.temperature
 
     def __str__(self):
-        return f'{[v.doc_id for v in self.persons.all()]} @ {self.checkpoint} {self.source_place} -> {self.destination_place}'
+        return f'{self.persons.count()} people @ {self.checkpoint} {self.source_place} -> {self.destination_place}'
+
+
+class CameraCapture(BaseModel):
+    """Захват проезжающего мимо камеры транспорта"""
+    id = f.UUIDField(primary_key=True)
+    camera = models.ForeignKey(Camera, on_delete=models.CASCADE)
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+    date = f.DateTimeField()
+    raw_data = f.CharField(max_length=50_000)  # сюда сохраним всё тело запроса
+    checkpoint_pass = models.OneToOneField(
+        CheckpointPass, on_delete=models.SET_NULL, null=True, blank=True, related_name='camera_capture'
+    )
+
+    def __str__(self):
+        return f"{self.vehicle} @ {self.camera} @ {self.date}"
 
 
 class PersonPassData(BaseModel):
     """Данные о прохождении КПП одним человеком"""
     class Meta:
         ordering = ['-add_date']
+        constraints = [
+            constraints.UniqueConstraint(fields=('person', 'checkpoint_pass'), name='checkpointpass_person_unique')
+        ]
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     checkpoint_pass = models.ForeignKey(CheckpointPass, on_delete=models.CASCADE)
     temperature = f.FloatField(null=True)  # температура в цельсиях

@@ -20,13 +20,13 @@ from django.urls import include
 # import app.views
 
 
-def error(request):
-    assert False, 'pumpidum'
+def index(request):
+    return redirect('api/')
 
 
 urlpatterns = [
-#     path('', app.views.index),
+    path('', index),
     path('admin/', admin.site.urls),
+    path('api/v2/', include('api2.urls')),
     path('api/', include('api.urls')),
-    path('error', error)
 ]
