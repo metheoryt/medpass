@@ -23,26 +23,6 @@ class PersonPassDataSerializer(serializers.ModelSerializer):
         fields = ['id', 'person', 'temperature']
 
 
-class CheckPointPassSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.CheckpointPass
-        fields = [
-            'id',
-            'checkpoint',
-            'source_place',
-            'destination_place',
-            'add_date',
-            'inspector',
-            'persons',
-            'vehicle',
-            'direction',
-            'status'
-        ]
-        read_only_fields = ['add_date', 'inspector', 'checkpoint', 'persons']
-        # depth = 1
-
-
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Country
@@ -87,6 +67,27 @@ class PersonSerializer(serializers.ModelSerializer):
         ]
     citizenship = serializers.PrimaryKeyRelatedField(queryset=models.Country.objects.all(), required=False)
     # markers = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+
+class CheckPointPassSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CheckpointPass
+        fields = [
+            'id',
+            'checkpoint',
+            'source_place',
+            'destination_place',
+            'add_date',
+            'inspector',
+            'persons',
+            'vehicle',
+            'direction',
+            'status'
+        ]
+        read_only_fields = ['add_date', 'inspector', 'checkpoint', 'persons']
+        # depth = 1
+
+    persons = PersonSerializer(many=True, read_only=True)
 
 
 class RegionSerializer(serializers.ModelSerializer):

@@ -70,9 +70,9 @@ class CheckpointPassPersonViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         models.PersonPassData.objects.update_or_create(
-            person=serializer.validated_data.pop('person'),
+            person=serializer.validated_data['person'],
             checkpoint_pass=self.kwargs['checkpoint_pass_pk'],
-            defaults=serializer.validated_data
+            defaults={'temperature': serializer.validated_data['temperature']}
         )
 
 
