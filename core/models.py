@@ -82,7 +82,10 @@ class Person(BaseModel):
     dmed_region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.full_name} / {self.doc_id} {self.citizenship.name}'
+        m = f'#{self.doc_id}'
+        if self.full_name:
+            m += f' / {self.full_name}'
+        return m
 
     def save(self, *args, **kwargs):
         self.iin = self.iin or None  # против пустых строк
@@ -201,7 +204,15 @@ class CheckpointPass(BaseModel):
         return ppd.temperature
 
     def __str__(self):
-        return f'{self.persons.count()} people @ {self.checkpoint} {self.source_place} -> {self.destination_place}'
+        m = ''
+        if self.source_place:
+            m += f'{self.source_place} -> '
+        m += f'{self.checkpoint}'
+        if self.destination_place:
+            m += f' -> {self.destination_place}'
+        if self.vehicle:
+            m += f' @{self.vehicle}'
+        return m
 
 
 class CameraCapture(BaseModel):
@@ -231,7 +242,8 @@ class PersonPassData(BaseModel):
     temperature = f.FloatField(null=True)  # температура в цельсиях
 
     def __str__(self):
-        m = f'{self.person} @ {self.checkpoint_pass}'
+        m = f'{self.person}'
         if self.temperature:
-            m += f' w {self.temperature:.01f} C'
+            m += f' {self.temperature:.01f} °C'
+        m += f' ({self.checkpoint_pass})'
         return m
