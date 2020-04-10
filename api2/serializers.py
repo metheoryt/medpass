@@ -110,4 +110,4 @@ class CameraSerializer(serializers.ModelSerializer):
 class CameraCaptureSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CameraCapture
-        fields = '__all__'
+        fields = 'id', 'date', 'camera', 'vehicle'

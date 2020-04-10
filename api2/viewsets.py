@@ -69,8 +69,11 @@ class CheckpointPassPersonViewSet(viewsets.ModelViewSet):
         ).order_by('-add_date')
 
     def perform_create(self, serializer):
-        serializer.validated_data['checkpoint_pass'] = models.CheckpointPass.objects.get(pk=self.kwargs['checkpoint_pass_pk'])
-        serializer.save()
+        models.PersonPassData.objects.update_or_create(
+            person=serializer.validated_data.pop('person'),
+            checkpoint_pass=self.kwargs['checkpoint_pass_pk'],
+            defaults=serializer.validated_data
+        )
 
 
 class RegionViewSet(viewsets.ModelViewSet):

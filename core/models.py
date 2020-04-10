@@ -231,4 +231,7 @@ class PersonPassData(BaseModel):
     temperature = f.FloatField(null=True)  # температура в цельсиях
 
     def __str__(self):
-        return f'{self.person} @ {self.checkpoint_pass} w {self.temperature:.01f} C'
+        m = f'{self.person} @ {self.checkpoint_pass}'
+        if self.temperature:
+            m += f' w {self.temperature:.01f} C'
+        return m
