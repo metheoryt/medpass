@@ -48,7 +48,7 @@ class DMEDService:
         rv = requests.post(url=self.url + self.URL_GET_TOKEN, json=dict(
             systemUsername=self.username,
             systemPassword=self.password
-        ))
+        ), timeout=4)
         return rv.text
 
     def handle_response(self, rv):
