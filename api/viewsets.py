@@ -130,13 +130,13 @@ class PersonViewSet(viewsets.ModelViewSet):
         # ищем в dmed и сохраняем
         # запускаем параллельно
         threads = []
-        for region in Region.objects.filter(dmed_url__isnull=False):
+        for region in Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority'):
             t = threading.Thread(target=self.update_person_from_damu, args=(p, region))
             threads.append(t)
 
         while threads:
-            # запускаем поиск в 4 потока
-            chunk, threads = threads[:4], threads[4:]
+            # запускаем поиск в 2 потока
+            chunk, threads = threads[:2], threads[2:]
             for t in chunk:
                 t.start()
 
