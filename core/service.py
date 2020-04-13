@@ -4,7 +4,7 @@ import requests
 from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import APIException, status
-
+import io
 from core.models import Person, Marker, Country
 import threading
 import logging
@@ -23,6 +23,7 @@ class DMEDService:
     URL_GET_TOKEN = 'Authentication/SignInExternalApp'
     URL_GET_PERSONS = 'Person/GetPersons'
     URL_GET_MARKERS = 'Person/GetPersonMarkers'
+    URL_GET_PERSON_DETAIL = 'Person/GetPersonDetail'
 
     def __init__(self, url, token=None, username=None, password=None):
         self.url = url
@@ -66,8 +67,8 @@ class DMEDService:
         payload = dict(iin=p.doc_id)
 
         log.info(f'dmed person rq: POST {url}: {payload}')
-
         rv = self.s.post(url, json=payload, timeout=4)
+
         data = self.handle_response(rv)
         if data:
             r = data[0]
@@ -91,6 +92,43 @@ class DMEDService:
 
             p.dmed_rpn_id = r.get('rpnID')
             p.dmed_master_data_id = r.get('masterDataID')
+            return True
+        return False
+
+    def update_person_detail(self, p: Person):
+        """
+        Типы адресов addressTypeID
+        1 Не указано
+        2 Фактическое место жительства
+        3 Регистрация по месту жительства (прописка)
+        4 Регистрация по месту временного пребывания
+        5 Адрес работы
+        310013005 Место рождения
+        """
+        if not p.dmed_rpn_id:
+            log.info(f'{p} has no rpn id, cannot request details')
+            return
+
+        url = self.url + self.URL_GET_PERSON_DETAIL
+
+        log.info(f'dmed person detail rq: POST {url}: {p.dmed_rpn_id}')
+        rv = self.s.post(
+            url,
+            data=io.StringIO(f'{p.dmed_rpn_id}'),
+            timeout=4,
+            headers={'content-type': 'application/json'}
+        )
+
+        data = self.handle_response(rv)
+        if data:
+            p.contact_numbers = data.get('phoneNumber') or p.contact_numbers
+            p.working_place = data.get('workPlaces') or p.working_place
+            for address in data.get('addresses', []):
+                if address.get('isMain') or address['addressTypeID'] == 2 and not p.residence_place:
+                    # основной адрес или фактическое место жительства
+                    p.residence_place = address['addressText']
+                elif address['addressTypeID'] == 5:
+                    p.working_place = address['addressText']
             return True
         return False
 

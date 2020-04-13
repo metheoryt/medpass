@@ -143,6 +143,8 @@ class PersonViewSet(viewsets.ModelViewSet):
             # ждём когда закончат
             for t in chunk:
                 t.join()
+                if p.dmed_id:
+                    break
 
             if p.dmed_id:
                 break
@@ -158,6 +160,9 @@ class PersonViewSet(viewsets.ModelViewSet):
             # если апдейт успешен, сохраняем анкету
             p.dmed_region = region  # запомним откуда получили информацию
             p.save()
+            updated = dmed.update_person_detail(p)
+            if updated:
+                p.save()
             dmed.update_person_markers(p)
 
     def update(self, request, *args, **kwargs):
