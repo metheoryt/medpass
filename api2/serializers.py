@@ -99,7 +99,7 @@ class RegionSerializer(serializers.ModelSerializer):
 class VehicleSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Vehicle
-        fields = '__all__'
+        fields = 'grnz', 'model'
 
 
 class CameraSerializer(serializers.ModelSerializer):
