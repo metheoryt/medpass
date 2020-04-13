@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect
 from rest_framework import mixins, permissions, viewsets, filters
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
+
 from api.viewsets import DjangoStrictModelPermissions
 from core import models
 from core.models import CheckpointPass
@@ -164,15 +167,18 @@ class CheckpointCameraCaptureViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = ss.CameraCaptureSerializer
     permission_classes = [DjangoStrictModelPermissions]
-    filter_backends = [filters.SearchFilter]
 
     def get_queryset(self):
         # Захваты с камер, относящихся к текущему КПП
         # по которым ещё не был проведён досмотр
-        return models.CameraCapture.objects.filter(
+        q = models.CameraCapture.objects.filter(
             Q(camera__checkpoint=self.request.user.checkpoint),
             Q(checkpoint_pass__status=models.CheckpointPass.Status.NOT_PASSED) | Q(checkpoint_pass__isnull=True),
         ).order_by('date')
+        if self.request.query_params.get('ts_from'):
+            dt_from = datetime.fromtimestamp(float(self.request.query_params['ts_from']))
+            q = q.filter(date__gte=dt_from)
+        return q
 
     @action(detail=True, methods=['get'], url_path='pass')
     def checkpoint_pass(self, request, pk=None):

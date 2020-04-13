@@ -111,7 +111,7 @@ class CameraSerializer(serializers.ModelSerializer):
 class CameraCaptureSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CameraCapture
-        fields = 'id', 'date', 'camera', 'vehicle'
+        fields = 'id', 'date', 'add_date', 'camera', 'vehicle'
 
     vehicle = VehicleSerializer()
     camera = CameraSerializer()
