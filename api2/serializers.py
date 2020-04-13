@@ -105,10 +105,13 @@ class VehicleSerializer(serializers.ModelSerializer):
 class CameraSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Camera
-        fields = '__all__'
+        fields = 'id', 'location'
 
 
 class CameraCaptureSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CameraCapture
         fields = 'id', 'date', 'camera', 'vehicle'
+
+    vehicle = VehicleSerializer()
+    camera = CameraSerializer()
