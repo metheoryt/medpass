@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect
@@ -9,8 +10,12 @@ from rest_framework.pagination import PageNumberPagination
 
 from api.viewsets import DjangoStrictModelPermissions
 from core import models
-from core.models import CheckpointPass
+from core.models import CheckpointPass, CITIZENSHIPS_KZ, CITIZENSHIP_KZ
+from core.service import DMEDService
 from . import serializers as ss
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class InspectorViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
@@ -133,6 +138,46 @@ class CountryPersonViewSet(viewsets.ModelViewSet):
     serializer_class = ss.PersonSerializer
     permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
     lookup_field = 'doc_id'
+
+    def retrieve(self, request, *args, **kwargs):
+        if request.query_params.get('fetch') and int(kwargs['country_pk']) in CITIZENSHIPS_KZ:
+            # Если запрашивают казахстанца, обновляем анкету из DAMU, создаём если таковой нет
+            p, created = models.Person.objects.get_or_create(
+                doc_id=kwargs['doc_id'],
+                citizenship__in=CITIZENSHIPS_KZ,
+                defaults={
+                    'citizenship': models.Country.objects.get(pk=kwargs['country_pk'])
+                }
+            )
+            if p.dmed_id:
+                # инфа уже была получена, не делаем внешний запрос
+                return super(CountryPersonViewSet, self).retrieve(request, *args, **kwargs)
+
+            for region in models.Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority'):
+                try:
+                    updated = self.update_person_from_damu(p, region)
+                except Exception as e:
+                    log.warning(f'error while fetching {region.dmed_url}: {e}')
+                else:
+                    if updated:
+                        break
+
+        return super(CountryPersonViewSet, self).retrieve(request, *args, **kwargs)
+
+    @staticmethod
+    def update_person_from_damu(p: models.Person, region: models.Region):
+        dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
+        updated = dmed.update_person(p)
+        if updated:
+            # если апдейт успешен, сохраняем анкету
+            p.dmed_region = region  # запомним откуда получили информацию
+            p.save()
+            updated = dmed.update_person_detail(p)
+            if updated:
+                p.save()
+            dmed.update_person_markers(p)
+            return True
+        return False
 
     def get_queryset(self):
         return models.Person.objects.filter(citizenship=self.kwargs['country_pk']).order_by('-add_date')
