@@ -16,6 +16,8 @@ django-filter = "*"
 sentry-sdk = "*"
 django-cors-headers = "*"
 drf-nested-routers = "*"
+channels = "*"
+daphne = "*"
 
 [requires]
 python_version = "3.7"

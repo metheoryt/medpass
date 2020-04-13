@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'corsheaders',
+    'channels',
     'core.apps.CoreConfig',
     'api.apps.ApiConfig',
     'api2.apps.Api2Config',
@@ -161,6 +162,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'meduserstore.wsgi.application'
+ASGI_APPLICATION = 'meduserstore.routing.application'
 
 
 # Database

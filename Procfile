@@ -1,1 +1,1 @@
-web: gunicorn --threads=32 --workers=4 meduserstore.wsgi
+web: daphne meduserstore.asgi:application
