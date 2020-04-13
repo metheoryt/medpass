@@ -36,13 +36,13 @@ class InspectorCheckpointViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMi
 class InspectorCheckpointPassViewSet(viewsets.ModelViewSet):
     """записи о прохождении КПП, на котором находится мединспектор"""
     class Pagination(PageNumberPagination):
-        page_size = 5
+        page_size = 10
         page_size_query_param = 'page_size'
         max_page_size = 100
 
+    pagination_class = Pagination
     serializer_class = ss.CheckPointPassSerializer
     permission_classes = [DjangoStrictModelPermissions]
-    pagination_class = Pagination
 
     def get_queryset(self):
         # сначала непроверенные, начиная с самых старых
@@ -96,6 +96,13 @@ class CheckpointViewSet(viewsets.ModelViewSet):
 
 class VehicleViewSet(viewsets.ModelViewSet):
     """Автомобили"""
+    class Pagination(PageNumberPagination):
+        page_size = 10
+        page_size_query_param = 'page_size'
+        max_page_size = 100
+
+    pagination_class = Pagination
+
     queryset = models.Vehicle.objects.all().order_by('-add_date')
     serializer_class = ss.VehicleSerializer
     permission_classes = [permissions.DjangoModelPermissions]
@@ -113,6 +120,13 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CountryPersonViewSet(viewsets.ModelViewSet):
     """Анкета гражданина конкретной страны"""
+    class Pagination(PageNumberPagination):
+        page_size = 10
+        page_size_query_param = 'page_size'
+        max_page_size = 100
+
+    pagination_class = Pagination
+
     serializer_class = ss.PersonSerializer
     permission_classes = [permissions.IsAuthenticated, DjangoStrictModelPermissions]
     lookup_field = 'doc_id'
@@ -141,6 +155,13 @@ class CountryPersonMarkerViewSet(viewsets.ModelViewSet):
 
 
 class CheckpointCameraCaptureViewSet(viewsets.ReadOnlyModelViewSet):
+    class Pagination(PageNumberPagination):
+        page_size = 10
+        page_size_query_param = 'page_size'
+        max_page_size = 100
+
+    pagination_class = Pagination
+
     serializer_class = ss.CameraCaptureSerializer
     permission_classes = [DjangoStrictModelPermissions]
     filter_backends = [filters.SearchFilter]
