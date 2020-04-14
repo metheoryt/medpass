@@ -150,7 +150,7 @@ class Vehicle(BaseModel):
     model = f.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
-        return self.grnz
+        return f'{self.grnz} {self.model}'
 
 
 class Camera(BaseModel):
@@ -227,7 +227,7 @@ class CameraCapture(BaseModel):
     )
 
     def __str__(self):
-        return f"{self.vehicle} @ {self.camera} @ {self.date}"
+        return f"{self.vehicle} @ {self.camera} @ {self.date.strftime('%Y-%m-%d %H:%M:%S')}"
 
 
 class PersonPassData(BaseModel):

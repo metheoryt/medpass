@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin, Group
+from django.contrib.auth.admin import UserAdmin
 from . import models, forms
 from django.utils.translation import gettext_lazy as _
 
@@ -33,4 +33,5 @@ admin.site.register(models.Person)
 admin.site.register(models.Marker)
 admin.site.register(models.Country)
 admin.site.register(models.Camera)
+admin.site.register(models.Vehicle)
 admin.site.register(models.CameraCapture, CameraCaptureAdmin)
