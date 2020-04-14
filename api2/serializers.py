@@ -17,10 +17,24 @@ class CheckPointSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class MinPersonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Person
+        fields = ['id', 'doc_id', 'citizenship']
+        read_only_fields = ['id']
+
+
 class PersonPassDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PersonPassData
-        fields = ['id', 'person', 'temperature']
+        fields = [
+            # 'id',
+            'person',
+            'temperature'
+        ]
+        # read_only_fields = ['id']
+
+    person = MinPersonSerializer()
 
 
 class CountrySerializer(serializers.ModelSerializer):

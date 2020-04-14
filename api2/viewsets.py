@@ -10,7 +10,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from api.viewsets import DjangoStrictModelPermissions
 from core import models
-from core.models import CheckpointPass, CITIZENSHIPS_KZ, CITIZENSHIP_KZ
+from core.models import CheckpointPass, CITIZENSHIPS_KZ
 from core.service import DMEDService
 from . import serializers as ss
 import logging
@@ -69,6 +69,7 @@ class InspectorCheckpointPassViewSet(viewsets.ModelViewSet):
 class CheckpointPassPersonViewSet(viewsets.ModelViewSet):
     serializer_class = ss.PersonPassDataSerializer
     permission_classes = [DjangoStrictModelPermissions]
+    lookup_field = 'person__id'
 
     def get_queryset(self):
         return models.PersonPassData.objects.filter(
@@ -77,9 +78,12 @@ class CheckpointPassPersonViewSet(viewsets.ModelViewSet):
         ).order_by('-add_date')
 
     def perform_create(self, serializer):
+        p, created = models.Person.objects.get_or_create(
+            **serializer.validated_data['person']
+        )
         models.PersonPassData.objects.update_or_create(
-            person=serializer.validated_data['person'],
-            checkpoint_pass=self.kwargs['checkpoint_pass_pk'],
+            person=p,
+            checkpoint_pass_id=self.kwargs['checkpoint_pass_pk'],
             defaults={'temperature': serializer.validated_data['temperature']}
         )
 
