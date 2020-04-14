@@ -19,6 +19,11 @@ class CustomUserAdmin(UserAdmin):
     )
 
 
+class CameraCaptureAdmin(admin.ModelAdmin):
+    list_display = '__str__', 'add_date'
+    ordering = '-add_date',
+
+
 admin.site.register(models.User, CustomUserAdmin)
 admin.site.register(models.Checkpoint)
 admin.site.register(models.CheckpointPass)
@@ -28,4 +33,4 @@ admin.site.register(models.Person)
 admin.site.register(models.Marker)
 admin.site.register(models.Country)
 admin.site.register(models.Camera)
-admin.site.register(models.CameraCapture)
+admin.site.register(models.CameraCapture, CameraCaptureAdmin)
