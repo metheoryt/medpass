@@ -30,19 +30,18 @@ class WebcamWebhook(APIView):
                 'location': pl['source']
             }
         )
-        if not camera.checkpoint:
-            # не сохраняем захваты с камер, не привязанных к чекпоинту
-            return HttpResponse()
 
-        vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
+        if camera.checkpoint:
+            # сохраняем захваты только с камер, привязанных к КПП
+            vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
 
-        CameraCapture.objects.create(
-            id=pl['raw']['event']['uuid'],
-            date=pl['raw']['event']['time'],
-            vehicle=vehicle,
-            camera=camera,
-            raw_data=body
-        )
+            CameraCapture.objects.create(
+                id=pl['raw']['event']['uuid'],
+                date=pl['raw']['event']['time'],
+                vehicle=vehicle,
+                camera=camera,
+                raw_data=body
+            )
 
         cache.set(body['id'], body, 60*60*24)
         return HttpResponse()
