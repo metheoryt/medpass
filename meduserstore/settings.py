@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+import dj_database_url
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -169,10 +170,7 @@ ASGI_APPLICATION = 'meduserstore.routing.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    'default': dj_database_url.config('DATABASE_URL')
 }
 
 
@@ -211,14 +209,10 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
 
-import django_heroku
-import dj_database_url
-
-django_heroku.settings(locals(), databases=False, logging=False)
-
-# Configure Django for DATABASE_URL environment variable.
-DATABASES['default'] = dj_database_url.config()
+if os.environ.get('HEROKU_DEPLOY'):
+    import django_heroku
+    django_heroku.settings(locals(), databases=False, logging=False)

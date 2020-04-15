@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+
+  db:
+    image: postgres
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - 5432:5432
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./staticfiles:/var/www/static  # settings.py, нужно собрать статику здесь, на месте, не в контейнерах
+      - /etc/letsencrypt/:/etc/letsencrypt
+      - nginx_log:/var/log/nginx/
+    ports:
+      - 8443:443
+      - 8080:80
+
+  websocket:
+    build: .
+    volumes:
+      - .:/opt/app
+    depends_on:
+      - db
+      - nginx
+    command: daphne -b 0.0.0.0 -p 8000 meduserstore.asgi:application
+
+  api:
+    build: .
+    volumes:
+      - .:/opt/app
+    depends_on:
+      - db
+      - nginx
+    command: gunicorn -b 0.0.0.0:8000 meduserstore.wsgi
+
+
+volumes:
+  db:
+  nginx_log:
