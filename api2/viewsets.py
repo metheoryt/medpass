@@ -223,7 +223,7 @@ class CheckpointCameraCaptureViewSet(viewsets.ReadOnlyModelViewSet):
         q = models.CameraCapture.objects.filter(
             Q(camera__checkpoint=self.request.user.checkpoint),
             Q(checkpoint_pass__status=models.CheckpointPass.Status.NOT_PASSED) | Q(checkpoint_pass__isnull=True),
-        ).order_by('date')
+        ).order_by('-add_date')
         if self.request.query_params.get('ts_from'):
             dt_from = datetime.fromtimestamp(float(self.request.query_params['ts_from']))
             q = q.filter(date__gte=dt_from)
