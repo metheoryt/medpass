@@ -267,7 +267,7 @@ class CameraCapture(BaseModel):
             checkpoint_pass = self.checkpoint_pass
         checkpoint_pass.vehicle = self.vehicle
         checkpoint_pass.checkpoint = inspector.checkpoint
-        checkpoint_pass.inspector = inspector.user
+        checkpoint_pass.inspector = inspector
         checkpoint_pass.save()
         self.save()
         return checkpoint_pass
