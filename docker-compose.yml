@@ -18,7 +18,7 @@ services:
     depends_on:
       - db
     ports:
-      - 8001:8000
+      - 127.0.0.1:8001:8000
     command: daphne -b 0.0.0.0 -p 8000 meduserstore.asgi:application
 
   api:
@@ -29,7 +29,7 @@ services:
     depends_on:
       - db
     ports:
-      - 8000:8000
+      - 127.0.0.1:8000:8000
     command: gunicorn -b 0.0.0.0:8000 --access-logfile=- meduserstore.wsgi
 
 volumes:
