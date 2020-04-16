@@ -120,6 +120,11 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False
+        },
+        'api2': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False
         }
     }
 }

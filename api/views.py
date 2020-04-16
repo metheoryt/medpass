@@ -15,7 +15,7 @@ class WebcamWebhook(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, format=None):
-        log.info(f'webcam rq: {request.body[:10_000]}')
+        log.debug(f'webcam rq {request.body}')
         body = json.loads(request.body)
         pl = json.loads(request.body)['body']
 
