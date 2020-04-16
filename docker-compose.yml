@@ -30,8 +30,7 @@ services:
       - db
     ports:
       - 8000:8000
-    command: gunicorn -b 0.0.0.0:8000 meduserstore.wsgi
-
+    command: gunicorn -b 0.0.0.0:8000 --access-logfile=- meduserstore.wsgi
 
 volumes:
   db:
