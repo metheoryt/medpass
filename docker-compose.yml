@@ -17,7 +17,9 @@ services:
       - .:/opt/app
     depends_on:
       - db
-    command: daphne -b 127.0.0.1 -p 8001 meduserstore.asgi:application
+    ports:
+      - 8001:8000
+    command: daphne -b 127.0.0.1 -p 8000 meduserstore.asgi:application
 
   api:
     build: .
@@ -25,6 +27,8 @@ services:
       - .:/opt/app
     depends_on:
       - db
+    ports:
+      - 8000:8000
     command: gunicorn -b 127.0.0.1:8000 meduserstore.wsgi
 
 
