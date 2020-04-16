@@ -42,6 +42,8 @@ if os.environ.get('SENTRY_DSN') and not DEBUG:
 
 
 ALLOWED_HOSTS = []
+if os.environ.get('ALLOWED_HOSTS'):
+    ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(',')
 
 
 # Application definition
@@ -213,6 +215,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
 
-if os.environ.get('HEROKU_DEPLOY'):
+if os.environ.get('IS_HEROKU'):
     import django_heroku
     django_heroku.settings(locals(), databases=False, logging=False)
