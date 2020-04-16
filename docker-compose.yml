@@ -25,6 +25,7 @@ services:
     build: .
     volumes:
       - .:/opt/app
+      - /var/www/static:/opt/app/staticfiles
     depends_on:
       - db
     ports:
