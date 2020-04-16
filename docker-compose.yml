@@ -19,8 +19,8 @@ services:
       - /etc/letsencrypt/:/etc/letsencrypt
       - nginx_log:/var/log/nginx/
     ports:
-      - 8443:443
-      - 8080:80
+      - 443:443
+      - 80:80
 
   websocket:
     build: .
