@@ -1,14 +1,13 @@
+import io
+import logging
 from datetime import datetime
 
 import requests
 from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import APIException, status
-import io
-from core.models import Person, Marker, Country
-import threading
-import logging
 
+from core.models import Country
 
 log = logging.getLogger(__name__)
 
@@ -61,8 +60,9 @@ class DMEDService:
             raise BadGateway(f"DMED gateway error - {data.get('message')!r}")
         return data
 
-    def update_person(self, p: Person):
-        """Заполняет пустой или обновляет существующий Person"""
+    def update_person(self, p):
+        """Заполняет пустой или обновляет существующий Person
+        :type p: core.models.Person"""
         url = self.url + self.URL_GET_PERSONS
         payload = dict(iin=p.doc_id)
 
@@ -95,7 +95,7 @@ class DMEDService:
             return True
         return False
 
-    def update_person_detail(self, p: Person):
+    def update_person_detail(self, p):
         """
         Типы адресов addressTypeID
         1 Не указано
@@ -104,7 +104,7 @@ class DMEDService:
         4 Регистрация по месту временного пребывания
         5 Адрес работы
         310013005 Место рождения
-        """
+        :type p: core.models.Person"""
         if not p.dmed_rpn_id:
             log.info(f'{p} has no rpn id, cannot request details')
             return
@@ -132,8 +132,9 @@ class DMEDService:
             return True
         return False
 
-    def update_person_markers(self, p: Person):
-        """Добавляет недобавленные маркеры к Person (с автосохранением)"""
+    def update_person_markers(self, p):
+        """Добавляет недобавленные маркеры к Person (с автосохранением)
+        :type p: core.models.Person"""
         url = self.url + self.URL_GET_MARKERS
         payload = dict(personID=p.dmed_id, limit=1024)
         log.info(f'dmed markers rq: POST {url}: {payload}')

@@ -6,7 +6,7 @@ from django.db.models import fields as f, Manager, constraints
 from django.contrib.auth import models as auth_models
 from django.utils import timezone
 
-from .service import DMEDService
+
 from .validators import validate_iin
 import logging
 
@@ -134,6 +134,7 @@ class Person(BaseModel):
             return False
 
     def update_from_dmed_region(self, region):
+        from .service import DMEDService
         dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
         updated = dmed.update_person(self)
         if updated:
