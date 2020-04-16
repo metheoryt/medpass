@@ -19,7 +19,7 @@ services:
       - db
     ports:
       - 8001:8000
-    command: daphne -b 127.0.0.1 -p 8000 meduserstore.asgi:application
+    command: daphne -b 0.0.0.0 -p 8000 meduserstore.asgi:application
 
   api:
     build: .
@@ -29,7 +29,7 @@ services:
       - db
     ports:
       - 8000:8000
-    command: gunicorn -b 127.0.0.1:8000 meduserstore.wsgi
+    command: gunicorn -b 0.0.0.0:8000 meduserstore.wsgi
 
 
 volumes:
