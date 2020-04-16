@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from django.core.cache import cache
 from django.http import HttpResponse
@@ -41,7 +42,7 @@ class WebcamWebhook(APIView):
 
             capture, created = CameraCapture.objects.update_or_create(
                 id=pl['raw']['event']['uuid'], defaults={
-                'date': pl['raw']['event']['time'],
+                'date': datetime.strptime(pl['raw']['event']['time'], '%Y-%m-%dT%H:%M:%S.%f%z'),
                 'camera': camera,
                 'vehicle': vehicle,
                 'raw_data': body
