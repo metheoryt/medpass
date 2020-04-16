@@ -1,10 +1,16 @@
 from typing import Optional
 
+from django.conf import settings
 from django.db import models
 from django.db.models import fields as f, Manager, constraints
 from django.contrib.auth import models as auth_models
 from django.utils import timezone
+
+from .service import DMEDService
 from .validators import validate_iin
+import logging
+
+log = logging.getLogger(__name__)
 
 
 CITIZENSHIP_KZ = 85
@@ -114,6 +120,31 @@ class Person(BaseModel):
         p = self.passes.order_by('-add_date').last()
         if p:
             return p.temperature
+
+    def update_from_dmed(self):
+        for region in Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority'):
+            try:
+                updated = self.update_from_dmed_region(region)
+            except Exception as e:
+                log.warning(f'error while fetching {region.dmed_url}: {e}')
+            else:
+                if updated:
+                    log.info(f'updated from {region.dmed_url}')
+                    return True
+            return False
+
+    def update_from_dmed_region(self, region):
+        dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
+        updated = dmed.update_person(self)
+        if updated:
+            # если апдейт успешен, сохраняем анкету
+            self.dmed_region = region  # запомним откуда получили информацию
+            self.save()
+            updated = dmed.update_person_detail(self)
+            if updated:
+                self.save()
+            dmed.update_person_markers(self)
+        return updated
 
 
 class Marker(BaseModel):
@@ -225,6 +256,20 @@ class CameraCapture(BaseModel):
     checkpoint_pass = models.OneToOneField(
         CheckpointPass, on_delete=models.SET_NULL, null=True, blank=True, related_name='camera_capture'
     )
+
+    def create_or_update_checkpoint_pass(self, inspector):
+        if not self.checkpoint_pass:
+            checkpoint_pass = CheckpointPass()
+            self.checkpoint_pass = checkpoint_pass
+            log.info(f'{checkpoint_pass} created')
+        else:
+            checkpoint_pass = self.checkpoint_pass
+        checkpoint_pass.vehicle = self.vehicle
+        checkpoint_pass.checkpoint = inspector.checkpoint
+        checkpoint_pass.inspector = inspector.user
+        checkpoint_pass.save()
+        self.save()
+        return checkpoint_pass
 
     def __str__(self):
         return f"{self.vehicle} @ {self.camera} @ {self.date.strftime('%Y-%m-%d %H:%M:%S')}"

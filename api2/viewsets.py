@@ -157,31 +157,9 @@ class CountryPersonViewSet(viewsets.ModelViewSet):
                 # инфа уже была получена, не делаем внешний запрос
                 return super(CountryPersonViewSet, self).retrieve(request, *args, **kwargs)
 
-            for region in models.Region.objects.filter(dmed_url__isnull=False).order_by('dmed_priority'):
-                try:
-                    updated = self.update_person_from_damu(p, region)
-                except Exception as e:
-                    log.warning(f'error while fetching {region.dmed_url}: {e}')
-                else:
-                    if updated:
-                        break
+            p.update_from_dmed()
 
         return super(CountryPersonViewSet, self).retrieve(request, *args, **kwargs)
-
-    @staticmethod
-    def update_person_from_damu(p: models.Person, region: models.Region):
-        dmed = DMEDService(url=region.dmed_url, username=settings.DMED_LOGIN, password=settings.DMED_PASSWORD)
-        updated = dmed.update_person(p)
-        if updated:
-            # если апдейт успешен, сохраняем анкету
-            p.dmed_region = region  # запомним откуда получили информацию
-            p.save()
-            updated = dmed.update_person_detail(p)
-            if updated:
-                p.save()
-            dmed.update_person_markers(p)
-            return True
-        return False
 
     def get_queryset(self):
         return models.Person.objects.filter(citizenship=self.kwargs['country_pk']).order_by('-add_date')
@@ -232,12 +210,5 @@ class CheckpointCameraCaptureViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['get'], url_path='pass')
     def checkpoint_pass(self, request, pk=None):
         capture: models.CameraCapture = self.get_object()
-        if not capture.checkpoint_pass:
-            p = models.CheckpointPass()
-            p.vehicle = capture.vehicle
-            p.checkpoint = self.request.user.checkpoint
-            p.inspector = self.request.user
-            p.save()
-            capture.checkpoint_pass = p
-            capture.save()
-        return redirect('inspector-checkpoint-pass-detail', pk=capture.checkpoint_pass.id)
+        checkpoint_pass = capture.create_or_update_checkpoint_pass(self.request.user)
+        return redirect('inspector-checkpoint-pass-detail', pk=checkpoint_pass.id)

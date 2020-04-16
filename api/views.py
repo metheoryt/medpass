@@ -6,7 +6,7 @@ from rest_framework import permissions
 from rest_framework.utils import json
 from rest_framework.views import APIView
 
-from core.models import Camera, CameraCapture, Vehicle
+from core.models import Camera, CameraCapture, Vehicle, Person, CITIZENSHIPS_KZ, CITIZENSHIP_KZ
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class WebcamWebhook(APIView):
         body = json.loads(request.body)
         pl = json.loads(request.body)['body']
 
-        if cache.get(body['id']):  # защита от повторных запросов
+        if cache.get(body['id']):  #
             return HttpResponse()
 
         camera, created = Camera.objects.update_or_create(
@@ -30,18 +30,39 @@ class WebcamWebhook(APIView):
                 'location': pl['source']
             }
         )
+        if created:
+            log.info(f'{camera} created')
 
         if camera.checkpoint:
             # сохраняем захваты только с камер, привязанных к КПП
             vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
+            if created:
+                log.info(f'{vehicle} created')
 
-            CameraCapture.objects.create(
-                id=pl['raw']['event']['uuid'],
-                date=pl['raw']['event']['time'],
-                vehicle=vehicle,
-                camera=camera,
-                raw_data=body
-            )
+            capture, created = CameraCapture.objects.update_or_create(
+                id=pl['raw']['event']['uuid'], defaults={
+                'date': pl['raw']['event']['time'],
+                'camera': camera,
+                'vehicle': vehicle,
+                'raw_data': body
+            })
+            if created:
+                log.info(f'{capture} created')
+
+            checkpoint_pass = capture.create_or_update_checkpoint_pass(self.request.user)
+
+            for v in pl.get('iins', []):
+                person, created = Person.objects.get_or_create(
+                    doc_id=v['iin'],
+                    citizenship__in=CITIZENSHIPS_KZ,
+                    defaults={"citizenship": CITIZENSHIP_KZ}
+                )
+                if created:
+                    log.info(f'{person} created')
+                    person.update_from_dmed()
+                checkpoint_pass.persons.add(person)
+            else:
+                checkpoint_pass.save()
 
         cache.set(body['id'], body, 60*60*24)
         return HttpResponse()
