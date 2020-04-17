@@ -106,24 +106,25 @@ LOGGING = {
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose'
+            'formatter': 'verbose',
+            'level': os.environ.get('LOG_LEVEL') or 'INFO'
         },
     },
     # определения логгеров (им назначаются обработчики, уровень логгирования, переопределяются фильтры)
     'loggers': {
         'api': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False
         },
         'core': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False
         },
         'api2': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False
         }
     }

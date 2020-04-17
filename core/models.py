@@ -182,7 +182,7 @@ class Vehicle(BaseModel):
     model = f.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.grnz} {self.model}'
+        return f'{self.grnz} {self.model or "unknown model"}'
 
 
 class Camera(BaseModel):
@@ -252,6 +252,7 @@ class CameraCapture(BaseModel):
     id = f.UUIDField(primary_key=True)
     camera = models.ForeignKey(Camera, on_delete=models.CASCADE)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
+    persons = models.ManyToManyField(Person, related_name='captures')
     date = f.DateTimeField()
     raw_data = f.CharField(max_length=50_000)  # сюда сохраним всё тело запроса
     checkpoint_pass = models.OneToOneField(
@@ -270,6 +271,9 @@ class CameraCapture(BaseModel):
         checkpoint_pass.inspector = inspector
         checkpoint_pass.save()
         self.save()
+        for person in self.persons.all():
+            checkpoint_pass.persons.add(person)
+
         return checkpoint_pass
 
     def __str__(self):

@@ -7,7 +7,7 @@ from rest_framework import permissions
 from rest_framework.utils import json
 from rest_framework.views import APIView
 
-from core.models import Camera, CameraCapture, Vehicle, Person, CITIZENSHIPS_KZ, CITIZENSHIP_KZ
+from core.models import Camera, CameraCapture, Vehicle, Person, CITIZENSHIPS_KZ, CITIZENSHIP_KZ, Country
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class WebcamWebhook(APIView):
         body = json.loads(request.body)
         pl = json.loads(request.body)['body']
 
-        if cache.get(body['id']):  #
+        if cache.get(body['id']):
             return HttpResponse()
 
         camera, created = Camera.objects.update_or_create(
@@ -32,7 +32,7 @@ class WebcamWebhook(APIView):
             }
         )
         if created:
-            log.info(f'{camera} created')
+            log.info(f'camera created {camera}')
 
         if camera.checkpoint:
             # сохраняем захваты только с камер, привязанных к КПП
@@ -48,22 +48,20 @@ class WebcamWebhook(APIView):
                 'raw_data': body
             })
             if created:
-                log.info(f'{capture} created')
-
-            checkpoint_pass = capture.create_or_update_checkpoint_pass(self.request.user)
+                log.info(f'capture created {capture}')
 
             for v in pl.get('iins', []):
                 person, created = Person.objects.get_or_create(
                     doc_id=v['iin'],
                     citizenship__in=CITIZENSHIPS_KZ,
-                    defaults={"citizenship": CITIZENSHIP_KZ}
+                    defaults={"citizenship": Country.objects.get(pk=CITIZENSHIP_KZ)}
                 )
+
+                capture.persons.add(person)
+
                 if created:
-                    log.info(f'{person} created')
+                    log.info(f'person created {person}')
                     person.update_from_dmed()
-                checkpoint_pass.persons.add(person)
-            else:
-                checkpoint_pass.save()
 
         cache.set(body['id'], body, 60*60*24)
         return HttpResponse()
