@@ -205,6 +205,8 @@ class CheckpointCameraCaptureViewSet(viewsets.ReadOnlyModelViewSet):
         if self.request.query_params.get('ts_from'):
             dt_from = datetime.fromtimestamp(float(self.request.query_params['ts_from']))
             q = q.filter(date__gte=dt_from)
+        if self.request.query_params.get('persons'):
+            q = q.filter(persons__isnull=self.request.query_params.get('persons') == '0')
         return q
 
     @action(detail=True, methods=['get'], url_path='pass')

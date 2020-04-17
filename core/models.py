@@ -214,7 +214,6 @@ class CheckpointPass(BaseModel):
     checkpoint = models.ForeignKey(Checkpoint, verbose_name='КПП', on_delete=models.SET_NULL, null=True, blank=True)
     source_place = f.CharField('Исходный пункт', max_length=512, null=True, blank=True)
     destination_place = f.CharField('Пункт назначения', max_length=512, null=True, blank=True)
-    direction = f.CharField(max_length=10, choices=Direction.choices, null=True, blank=True)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True, related_name='passes')
     status = f.CharField('Статус прохождения', max_length=30, choices=Status.choices, default=Status.NOT_PASSED)
 
@@ -252,7 +251,7 @@ class CameraCapture(BaseModel):
     id = f.UUIDField(primary_key=True)
     camera = models.ForeignKey(Camera, on_delete=models.CASCADE)
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE)
-    persons = models.ManyToManyField(Person, related_name='captures')
+    persons = models.ManyToManyField(Person, related_name='captures', blank=True)
     date = f.DateTimeField()
     raw_data = f.CharField(max_length=50_000)  # сюда сохраним всё тело запроса
     checkpoint_pass = models.OneToOneField(
