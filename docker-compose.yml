@@ -11,6 +11,13 @@ services:
     ports:
       - 45432:5432
 
+  redis:
+    image: redis
+    ports:  # прячем от внешних глаз
+      - 127.0.0.1:46379:6379
+    volumes:
+      - redis:/data
+
   websocket:
     build: .
     volumes:
@@ -34,3 +41,4 @@ services:
 
 volumes:
   db:
+  redis:

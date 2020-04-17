@@ -1,12 +1,15 @@
 import logging
 from datetime import datetime
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.core.cache import cache
 from django.http import HttpResponse
 from rest_framework import permissions
 from rest_framework.utils import json
 from rest_framework.views import APIView
 
+from api2.consumers import CheckpointConsumer
 from core.models import Camera, CameraCapture, Vehicle, Person, CITIZENSHIPS_KZ, CITIZENSHIP_KZ, Country
 
 log = logging.getLogger(__name__)
@@ -41,12 +44,14 @@ class WebcamWebhook(APIView):
                 log.info(f'{vehicle} created')
 
             capture, created = CameraCapture.objects.update_or_create(
-                id=pl['raw']['event']['uuid'], defaults={
-                'date': datetime.strptime(pl['raw']['event']['time'], '%Y-%m-%dT%H:%M:%S.%f%z'),
-                'camera': camera,
-                'vehicle': vehicle,
-                'raw_data': body
-            })
+                id=pl['raw']['event']['uuid'],
+                defaults={
+                    'date': datetime.strptime(pl['raw']['event']['time'], '%Y-%m-%dT%H:%M:%S.%f%z'),
+                    'camera': camera,
+                    'vehicle': vehicle,
+                    'raw_data': body
+                }
+            )
             if created:
                 log.info(f'capture created {capture}')
 
@@ -62,6 +67,16 @@ class WebcamWebhook(APIView):
                 if created:
                     log.info(f'person created {person}')
                     person.update_from_dmed()
+
+            # рассылаем уведомление по вебсокетам
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                CheckpointConsumer.GROUP_NAME_TEMPLATE.format(camera.checkpoint.id),
+                {
+                    'type': 'notify_about_event',
+                    'payload': {'event': 'refresh', 'type': 'CameraCapture'}
+                }
+            )
 
         cache.set(body['id'], body, 60*60*24)
         return HttpResponse()

@@ -131,14 +131,6 @@ LOGGING = {
 }
 
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'medpass_cache',
-    }
-}
-
-
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -172,7 +164,37 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'meduserstore.wsgi.application'
 ASGI_APPLICATION = 'meduserstore.routing.application'
+_redis_host, _redis_port = os.environ['REDIS_DSN'].split(':')
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(_redis_host, int(_redis_port))],
+        },
+    },
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': [
+            os.environ['REDIS_DSN'],
+        ],
+        'OPTIONS': {
+            'DB': 1,
+            # 'PASSWORD': 'yadayada',
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
+            'CONNECTION_POOL_CLASS_KWARGS': {
+                'max_connections': 50,
+                'timeout': 3,
+            },
+            'MAX_CONNECTIONS': 1000,
+            'PICKLE_VERSION': -1,
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases

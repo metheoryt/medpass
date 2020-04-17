@@ -18,6 +18,8 @@ django-cors-headers = "*"
 drf-nested-routers = "*"
 channels = "*"
 daphne = "*"
+channels-redis = "*"
+django-redis-cache = "*"
 
 [requires]
 python_version = "3.7"
