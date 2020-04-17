@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 
 from api2.consumers import CheckpointConsumer
 from core.models import Camera, CameraCapture, Vehicle, Person, CITIZENSHIPS_KZ, CITIZENSHIP_KZ, Country
+from core.validators import is_iin
 
 log = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ class WebcamWebhook(APIView):
                 log.info(f'capture created {capture}')
 
             for v in pl.get('iins', []):
+                # assert is_iin(v)
                 person, created = Person.objects.get_or_create(
                     doc_id=v['iin'],
                     citizenship__in=CITIZENSHIPS_KZ,

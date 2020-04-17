@@ -206,7 +206,8 @@ class CheckpointCameraCaptureViewSet(viewsets.ReadOnlyModelViewSet):
             dt_from = datetime.fromtimestamp(float(self.request.query_params['ts_from']))
             q = q.filter(date__gte=dt_from)
         if self.request.query_params.get('persons'):
-            q = q.filter(persons__isnull=self.request.query_params.get('persons') == '0')
+            # без distinct дублирует те что c людьми по количеству отношений с людьми
+            q = q.filter(persons__isnull=self.request.query_params.get('persons') == '0').distinct()
         return q
 
     @action(detail=True, methods=['get'], url_path='pass')
