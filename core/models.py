@@ -110,7 +110,7 @@ class Person(BaseModel):
     def iin(self, value):
         """Для обратной совместимости"""
         if value:
-            validate_iin(value)
+            # validate_iin(value)
             self.doc_id = value
             self.citizenship = Country.objects.get(pk=CITIZENSHIP_KZ)
 
