@@ -125,7 +125,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     """Страны"""
-    queryset = models.Country.objects.all().order_by('priority', 'name')
+    queryset = models.Country.objects.all()
     serializer_class = ss.CountrySerializer
     permission_classes = [permissions.IsAuthenticated]
 
