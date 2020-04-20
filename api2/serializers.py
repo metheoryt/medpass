@@ -95,7 +95,6 @@ class CheckPointPassSerializer(serializers.ModelSerializer):
             'inspector',
             'persons',
             'vehicle',
-            'direction',
             'status'
         ]
         read_only_fields = ['add_date', 'inspector', 'checkpoint', 'persons']
