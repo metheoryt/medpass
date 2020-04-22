@@ -26,7 +26,10 @@ class WebcamWebhook(APIView):
         if cache.get(body['id']):
             return HttpResponse()
 
-        camera = Camera.objects.get(location=pl['source'])  # идентифицируем камеру только по имени
+        camera = Camera.objects.update_or_create(location=pl['source'], defaults={
+            'lat': pl['latlng'][0],
+            'lon': pl['latlng'][1]
+        })  # идентифицируем камеру только по имени
 
         vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
         if created:
