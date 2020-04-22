@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+    <h3>Новые КПП</h3>
+    <ul>
+    {% for c in checkpoints %}
+        <li>{{ c.id }}: {{ c.name }}</li>
+    {% endfor %}
+    </ul>
+    <h3>Новые камеры</h3>
+    <ul>
+    {% for c in cameras %}
+        <li>{{ c.checkpoint.name }}: "{{ c.location }}"</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

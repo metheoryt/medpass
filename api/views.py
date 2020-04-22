@@ -11,7 +11,6 @@ from rest_framework.views import APIView
 
 from api2.consumers import CheckpointConsumer
 from core.models import Camera, CameraCapture, Vehicle, Person, CITIZENSHIPS_KZ, CITIZENSHIP_KZ, Country
-from core.validators import is_iin
 
 log = logging.getLogger(__name__)
 
@@ -27,60 +26,49 @@ class WebcamWebhook(APIView):
         if cache.get(body['id']):
             return HttpResponse()
 
-        camera, created = Camera.objects.update_or_create(
-            id=pl['raw']['event']['origin'],
+        camera = Camera.objects.get(location=pl['source'])  # идентифицируем камеру только по имени
+
+        vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
+        if created:
+            log.info(f'{vehicle} created')
+
+        capture, created = CameraCapture.objects.update_or_create(
+            id=pl['raw']['event']['uuid'],
             defaults={
-                'lat': pl['latlng'][0],
-                'lon': pl['latlng'][1],
-                'location': pl['source']
+                # перезаписываем дату создания чтобы приложение видело новые изменения вверху
+                'add_date': datetime.utcnow(),
+                'date': datetime.strptime(pl['raw']['event']['time'], '%Y-%m-%dT%H:%M:%S.%f%z'),
+                'camera': camera,
+                'vehicle': vehicle,
+                'raw_data': body
             }
         )
         if created:
-            log.info(f'camera created {camera}')
+            log.info(f'capture created {capture}')
 
-        if camera.checkpoint:
-            # сохраняем захваты только с камер, привязанных к КПП
-            vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
-            if created:
-                log.info(f'{vehicle} created')
-
-            capture, created = CameraCapture.objects.update_or_create(
-                id=pl['raw']['event']['uuid'],
-                defaults={
-                    # перезаписываем дату создания чтобы приложение увидело изменения
-                    'add_date': datetime.utcnow(),
-                    'date': datetime.strptime(pl['raw']['event']['time'], '%Y-%m-%dT%H:%M:%S.%f%z'),
-                    'camera': camera,
-                    'vehicle': vehicle,
-                    'raw_data': body
-                }
+        for v in pl.get('iins', []):
+            # assert is_iin(v)
+            person, created = Person.objects.get_or_create(
+                doc_id=v['iin'],
+                citizenship__in=CITIZENSHIPS_KZ,
+                defaults={"citizenship": Country.objects.get(pk=CITIZENSHIP_KZ)}
             )
+
+            capture.persons.add(person)
+
             if created:
-                log.info(f'capture created {capture}')
+                log.info(f'person created {person}')
+                person.update_from_dmed()
 
-            for v in pl.get('iins', []):
-                # assert is_iin(v)
-                person, created = Person.objects.get_or_create(
-                    doc_id=v['iin'],
-                    citizenship__in=CITIZENSHIPS_KZ,
-                    defaults={"citizenship": Country.objects.get(pk=CITIZENSHIP_KZ)}
-                )
-
-                capture.persons.add(person)
-
-                if created:
-                    log.info(f'person created {person}')
-                    person.update_from_dmed()
-
-            # рассылаем уведомление по вебсокетам
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                CheckpointConsumer.GROUP_NAME_TEMPLATE.format(camera.checkpoint.id),
-                {
-                    'type': 'notify_about_event',
-                    'payload': {'event': 'refresh', 'type': 'CameraCapture'}
-                }
-            )
+        # рассылаем уведомление по вебсокетам
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            CheckpointConsumer.GROUP_NAME_TEMPLATE.format(camera.checkpoint.id),
+            {
+                'type': 'notify_about_event',
+                'payload': {'event': 'refresh', 'type': 'CameraCapture'}
+            }
+        )
 
         cache.set(body['id'], body, 60*60*24)
         return HttpResponse()

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework_nested import routers
-from . import viewsets
+from . import viewsets, views
 
 
 # перспектива мединспектора
@@ -35,4 +35,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('', include(countries_router.urls)),
     path('', include(persons_router.urls)),
+    path('util/import-checkpoints-egsv', views.ImportCheckpoints.as_view()),
 ]

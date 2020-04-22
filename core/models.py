@@ -159,6 +159,7 @@ class Marker(BaseModel):
 
 class Checkpoint(BaseModel):
     """Контрольно-пропускной пост"""
+    id = f.CharField(max_length=100, primary_key=True)
     name = f.CharField(max_length=500)
     location = f.CharField(max_length=500, null=True, blank=True)
     region = models.ForeignKey(Region, on_delete=models.SET_NULL, null=True, blank=True)
@@ -169,7 +170,8 @@ class Checkpoint(BaseModel):
 
 class User(auth_models.AbstractUser):
     """Пользователь проекта - мединспектор"""
-    checkpoint = models.ForeignKey(Checkpoint, on_delete=models.SET_NULL, null=True, blank=True, related_name='inspectors')
+    checkpoint = models.ForeignKey(
+        Checkpoint, on_delete=models.SET_NULL, null=True, blank=True, related_name='inspectors')
     """кпп инспектора"""
 
     def __str__(self):
@@ -186,12 +188,11 @@ class Vehicle(BaseModel):
 
 
 class Camera(BaseModel):
-    id = f.UUIDField(primary_key=True)
+    location = f.CharField(max_length=1000, unique=True)  # при импорте КПП камеры связываются с КПП по этому полю
 
     # геопозиция
-    lon = f.FloatField()
-    lat = f.FloatField()
-    location = f.CharField(max_length=1000)
+    lon = f.FloatField(null=True)
+    lat = f.FloatField(null=True)
     # с каким КПП связана
     checkpoint = models.ForeignKey(Checkpoint, on_delete=models.CASCADE, null=True, blank=True, related_name='cameras')
 
