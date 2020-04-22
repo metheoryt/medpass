@@ -47,6 +47,8 @@ class WebcamWebhook(APIView):
             capture, created = CameraCapture.objects.update_or_create(
                 id=pl['raw']['event']['uuid'],
                 defaults={
+                    # перезаписываем дату создания чтобы приложение увидело изменения
+                    'add_date': datetime.utcnow(),
                     'date': datetime.strptime(pl['raw']['event']['time'], '%Y-%m-%dT%H:%M:%S.%f%z'),
                     'camera': camera,
                     'vehicle': vehicle,
