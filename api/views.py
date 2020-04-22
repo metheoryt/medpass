@@ -30,10 +30,12 @@ class WebcamWebhook(APIView):
             'lat': pl['latlng'][0],
             'lon': pl['latlng'][1]
         })  # идентифицируем камеру только по имени
+        if created:
+            log.info(f'camera created {camera}')
 
         vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
         if created:
-            log.info(f'{vehicle} created')
+            log.info(f'vehicle created {vehicle}')
 
         capture, created = CameraCapture.objects.update_or_create(
             id=pl['raw']['event']['uuid'],
@@ -63,15 +65,16 @@ class WebcamWebhook(APIView):
                 log.info(f'person created {person}')
                 person.update_from_dmed()
 
-        # рассылаем уведомление по вебсокетам
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            CheckpointConsumer.GROUP_NAME_TEMPLATE.format(camera.checkpoint.id),
-            {
-                'type': 'notify_about_event',
-                'payload': {'event': 'refresh', 'type': 'CameraCapture'}
-            }
-        )
+        if camera.checkpoint:
+            # рассылаем уведомление по вебсокетам
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                CheckpointConsumer.GROUP_NAME_TEMPLATE.format(camera.checkpoint.id),
+                {
+                    'type': 'notify_about_event',
+                    'payload': {'event': 'refresh', 'type': 'CameraCapture'}
+                }
+            )
 
         cache.set(body['id'], body, 60*60*24)
         return HttpResponse()
