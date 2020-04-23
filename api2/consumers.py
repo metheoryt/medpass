@@ -4,13 +4,13 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
 
-class CheckpointConsumer(WebsocketConsumer):
-    GROUP_NAME_TEMPLATE = 'checkpoint_{}'
+class CameraConsumer(WebsocketConsumer):
+    GROUP_NAME_TEMPLATE = 'checkpoint_camera_{}'
 
     def connect(self):
         self.accept()
-        self.checkpoint_id = self.scope['url_route']['kwargs']['checkpoint_id']
-        self.group_name = self.GROUP_NAME_TEMPLATE.format(self.checkpoint_id)
+        self.camera_id = self.scope['url_route']['kwargs']['camera_id']
+        self.group_name = self.GROUP_NAME_TEMPLATE.format(self.camera_id)
         # добавляем в группу слушателей событий с этого чекпоинта
         async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
 

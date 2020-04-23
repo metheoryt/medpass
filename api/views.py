@@ -9,7 +9,7 @@ from rest_framework import permissions
 from rest_framework.utils import json
 from rest_framework.views import APIView
 
-from api2.consumers import CheckpointConsumer
+from api2.consumers import CameraConsumer
 from core.models import Camera, CameraCapture, Vehicle, Person, CITIZENSHIPS_KZ, CITIZENSHIP_KZ, Country
 
 log = logging.getLogger(__name__)
@@ -64,16 +64,15 @@ class WebcamWebhook(APIView):
                 log.info(f'person created {person}')
                 person.update_from_dmed()
 
-        if camera.checkpoint:
-            # рассылаем уведомление по вебсокетам
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                CheckpointConsumer.GROUP_NAME_TEMPLATE.format(camera.checkpoint.id),
-                {
-                    'type': 'notify_about_event',
-                    'payload': {'event': 'refresh', 'type': 'CameraCapture'}
-                }
-            )
+        # рассылаем уведомление по вебсокетам
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            CameraConsumer.GROUP_NAME_TEMPLATE.format(camera.id),
+            {
+                'type': 'notify_about_event',
+                'payload': {'event': 'refresh', 'type': 'CameraCapture'}
+            }
+        )
 
         cache.set(body['id'], body, 60*60*24)
         return HttpResponse()

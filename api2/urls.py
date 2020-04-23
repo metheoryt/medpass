@@ -6,6 +6,7 @@ from . import viewsets, views
 # перспектива мединспектора
 cp_router = routers.SimpleRouter()
 cp_router.register(r'passes', viewsets.InspectorCheckpointPassViewSet, basename='inspector-checkpoint-pass')
+cp_router.register(r'cameras', viewsets.CheckpointCameraViewSet, basename='inspector-checkpoint-camera')
 cp_router.register(r'captures', viewsets.CheckpointCameraCaptureViewSet, basename='inspector-checkpoint-capture')
 pass_router = routers.NestedSimpleRouter(cp_router, r'passes', lookup='checkpoint_pass')
 pass_router.register(r'persons', viewsets.CheckpointPassPersonViewSet, basename='checkpoint-pass-person')

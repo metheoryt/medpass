@@ -106,6 +106,15 @@ class CheckpointViewSet(viewsets.ModelViewSet):
     search_fields = ['^name']
 
 
+class CheckpointCameraViewSet(viewsets.ModelViewSet):
+    """Камеры КПП"""
+    serializer_class = ss.CameraSerializer
+    permission_classes = [permissions.DjangoModelPermissions]
+
+    def get_queryset(self):
+        return models.Camera.objects.filter(checkpoint=self.request.user.checkpoint)
+
+
 class VehicleViewSet(viewsets.ModelViewSet):
     """Автомобили"""
     class Pagination(PageNumberPagination):
