@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.conf import settings
+
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect
@@ -11,7 +11,7 @@ from rest_framework.pagination import PageNumberPagination
 from api.viewsets import DjangoStrictModelPermissions
 from core import models
 from core.models import CheckpointPass, CITIZENSHIPS_KZ
-from core.service import DMEDService
+
 from . import serializers as ss
 import logging
 
@@ -115,6 +115,43 @@ class CheckpointCameraViewSet(viewsets.ModelViewSet):
         return models.Camera.objects.filter(checkpoint=self.request.user.checkpoint)
 
 
+class CheckpointCameraCaptureViewSet(viewsets.ReadOnlyModelViewSet):
+    """Захваты с камеры КПП"""
+    class Pagination(PageNumberPagination):
+        page_size = 10
+        page_size_query_param = 'page_size'
+        max_page_size = 100
+
+    pagination_class = Pagination
+
+    serializer_class = ss.CameraCaptureSerializer
+    permission_classes = [DjangoStrictModelPermissions]
+
+    def get_queryset(self):
+        # Захваты с одной из камер, относящихся к текущему КПП,
+        # по которым ещё не был проведён досмотр
+        q = models.CameraCapture.objects.filter(
+            Q(camera=self.request.user.checkpoint.cameras.get(pk=self.kwargs['camera_pk'])),
+            Q(checkpoint_pass__status=models.CheckpointPass.Status.NOT_PASSED) | Q(checkpoint_pass__isnull=True),
+        ).order_by('-add_date')
+
+        if self.request.query_params.get('ts_from'):
+            dt_from = datetime.fromtimestamp(float(self.request.query_params['ts_from']))
+            q = q.filter(add_date__gte=dt_from)
+
+        if self.request.query_params.get('persons'):
+            # без distinct дублирует те что c людьми по количеству отношений с людьми
+            q = q.filter(persons__isnull=self.request.query_params.get('persons') == '0').distinct()
+
+        return q
+
+    @action(detail=True, methods=['get'], url_path='pass')
+    def checkpoint_pass(self, request, pk=None, camera_pk=None):
+        capture: models.CameraCapture = self.get_object()
+        checkpoint_pass = capture.create_or_update_checkpoint_pass(self.request.user)
+        return redirect('inspector-checkpoint-pass-detail', pk=checkpoint_pass.id)
+
+
 class VehicleViewSet(viewsets.ModelViewSet):
     """Автомобили"""
     class Pagination(PageNumberPagination):
@@ -191,36 +228,3 @@ class CountryPersonMarkerViewSet(viewsets.ModelViewSet):
             persons__doc_id=self.kwargs['person_doc_id'],
             persons__citizenship=self.kwargs['country_pk']
         ).order_by('-add_date')
-
-
-class CheckpointCameraCaptureViewSet(viewsets.ReadOnlyModelViewSet):
-    class Pagination(PageNumberPagination):
-        page_size = 10
-        page_size_query_param = 'page_size'
-        max_page_size = 100
-
-    pagination_class = Pagination
-
-    serializer_class = ss.CameraCaptureSerializer
-    permission_classes = [DjangoStrictModelPermissions]
-
-    def get_queryset(self):
-        # Захваты с камер, относящихся к текущему КПП
-        # по которым ещё не был проведён досмотр
-        q = models.CameraCapture.objects.filter(
-            Q(camera__checkpoint=self.request.user.checkpoint),
-            Q(checkpoint_pass__status=models.CheckpointPass.Status.NOT_PASSED) | Q(checkpoint_pass__isnull=True),
-        ).order_by('-add_date')
-        if self.request.query_params.get('ts_from'):
-            dt_from = datetime.fromtimestamp(float(self.request.query_params['ts_from']))
-            q = q.filter(add_date__gte=dt_from)
-        if self.request.query_params.get('persons'):
-            # без distinct дублирует те что c людьми по количеству отношений с людьми
-            q = q.filter(persons__isnull=self.request.query_params.get('persons') == '0').distinct()
-        return q
-
-    @action(detail=True, methods=['get'], url_path='pass')
-    def checkpoint_pass(self, request, pk=None):
-        capture: models.CameraCapture = self.get_object()
-        checkpoint_pass = capture.create_or_update_checkpoint_pass(self.request.user)
-        return redirect('inspector-checkpoint-pass-detail', pk=checkpoint_pass.id)

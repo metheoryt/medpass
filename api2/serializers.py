@@ -89,6 +89,7 @@ class CheckPointPassSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'checkpoint',
+            'camera_capture',
             'source_place',
             'destination_place',
             'add_date',
@@ -97,7 +98,7 @@ class CheckPointPassSerializer(serializers.ModelSerializer):
             'vehicle',
             'status'
         ]
-        read_only_fields = ['add_date', 'inspector', 'checkpoint', 'persons']
+        read_only_fields = ['add_date', 'inspector', 'checkpoint', 'persons', 'camera_capture']
         # depth = 1
 
     persons = PersonSerializer(many=True, read_only=True)

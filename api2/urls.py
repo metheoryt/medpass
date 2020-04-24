@@ -5,13 +5,16 @@ from . import viewsets, views
 
 # перспектива мединспектора
 cp_router = routers.SimpleRouter()
-cp_router.register(r'passes', viewsets.InspectorCheckpointPassViewSet, basename='inspector-checkpoint-pass')
+
 cp_router.register(r'cameras', viewsets.CheckpointCameraViewSet, basename='inspector-checkpoint-camera')
-cp_router.register(r'captures', viewsets.CheckpointCameraCaptureViewSet, basename='inspector-checkpoint-capture')
+cam_router = routers.NestedSimpleRouter(cp_router, r'cameras', lookup='camera')
+cam_router.register(r'captures', viewsets.CheckpointCameraCaptureViewSet, basename='inspector-checkpoint-camera-capture')
+
+cp_router.register(r'passes', viewsets.InspectorCheckpointPassViewSet, basename='inspector-checkpoint-pass')
 pass_router = routers.NestedSimpleRouter(cp_router, r'passes', lookup='checkpoint_pass')
 pass_router.register(r'persons', viewsets.CheckpointPassPersonViewSet, basename='checkpoint-pass-person')
 
-# перспектива страны
+# обезличенные реестры
 router = routers.SimpleRouter()
 router.register(r'countries', viewsets.CountryViewSet)
 router.register(r'regions', viewsets.RegionViewSet)
@@ -33,6 +36,7 @@ urlpatterns = [
          viewsets.InspectorCheckpointViewSet.as_view(dict(get='retrieve', put='update', patch='partial_update'))),
     path('inspector/checkpoint/', include(cp_router.urls)),
     path('inspector/checkpoint/', include(pass_router.urls)),
+    path('inspector/checkpoint/', include(cam_router.urls)),
     path('', include(router.urls)),
     path('', include(countries_router.urls)),
     path('', include(persons_router.urls)),
