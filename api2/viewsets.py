@@ -58,6 +58,10 @@ class InspectorCheckpointPassViewSet(viewsets.ModelViewSet):
             checkpoint=self.request.user.checkpoint,
         ).order_by('status', 'add_date')
 
+    def create(self, request, *args, **kwargs):
+        models.Vehicle.objects.get_or_create(pk=request.data['vehicle'])
+        return super(InspectorCheckpointPassViewSet, self).create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         instance = serializer.save()
         instance.inspector = self.request.user
