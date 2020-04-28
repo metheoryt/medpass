@@ -41,7 +41,7 @@ def fetch_camera_checkpoint(camera_name):
             log.info(f'checkpoint {checkpoint} changed name to {r[cid]["name"]}')
             checkpoint.name = r[cid]['name']
             checkpoint.save()
-            return checkpoint
+        return checkpoint
 
 
 class WebcamWebhook(APIView):
