@@ -74,7 +74,7 @@ class WebcamWebhook(APIView):
             camera.save()
 
         if not camera.checkpoint:
-            return
+            return HttpResponse()
 
         vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
         if created:
