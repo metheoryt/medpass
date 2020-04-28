@@ -68,10 +68,13 @@ class WebcamWebhook(APIView):
                 log.info(f'camera {camera} moved from {camera.checkpoint} to {cp}')
                 camera.checkpoint = cp
                 camera.save()
-        else:
+        elif camera.checkpoint:
             log.info(f'camera {camera} dissociated with checkpoint {camera.checkpoint}')
             camera.checkpoint = None
             camera.save()
+
+        if not camera.checkpoint:
+            return
 
         vehicle, created = Vehicle.objects.update_or_create(grnz=pl['number'], defaults={'model': pl.get('mark')})
         if created:
