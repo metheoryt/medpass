@@ -56,7 +56,7 @@ class WebcamWebhook(APIView):
             return HttpResponse()
 
         # идентифицируем камеру только по имени
-        camera = Camera.objects.create_or_update(location=pl['source'], defaults={
+        camera = Camera.objects.update_or_create(location=pl['source'], defaults={
             'lat': pl['latlng'][0],
             'lon': pl['latlng'][1]
         })
