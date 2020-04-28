@@ -27,7 +27,7 @@ def fetch_camera_checkpoint(camera_name):
     c = defaultdict(list)
     parent_checkpoints = set([c['parent'] for c in r.values() if c['parent']])
 
-    for k, v in r.values():
+    for k, v in r.items():
         if k in parent_checkpoints:
             continue
         for s in v['sources']:
