@@ -35,9 +35,7 @@ if (window.ApplePaySession) {
 //            document.getElementById('applepay').style.display = "block";
             document.getElementById('applepay-btn').onclick = function (event) {
                 console.log(event);
-                alert('before session created');
                 const applePaySession = new window.ApplePaySession(1, paymentRequest);
-                alert('session created');
                 applePaySession.onvalidatemerchant = (event) => {
                     // отправляем запрос на валидацию сессии
                     performValidation(event.validationURL)
@@ -52,7 +50,6 @@ if (window.ApplePaySession) {
                             }
                         );
                 };
-                alert('onvalidate set');
                 applePaySession.onpaymentauthorized = (pk_payment) => {
                     performAuthorization(pk_payment)
                         .then((success) => {
@@ -67,9 +64,7 @@ if (window.ApplePaySession) {
                             applePaySession.completePayment(window.ApplePaySession.STATUS_FAILURE);
                         })
                 }
-                alert('onauthorized set');
                 applePaySession.begin();
-                alert('session begin');
             }
         }
     });
