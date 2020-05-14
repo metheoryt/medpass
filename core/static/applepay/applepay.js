@@ -38,6 +38,7 @@ if (window.ApplePaySession) {
                 const applePaySession = new window.ApplePaySession(1, paymentRequest);
                 applePaySession.onvalidatemerchant = (event) => {
                     // отправляем запрос на валидацию сессии
+                    console.log(event);
                     performValidation(event.validationURL)
                         .then((merchantSession) => {
                             // завершаем валидацию платежной сессии
