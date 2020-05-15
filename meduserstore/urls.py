@@ -18,7 +18,7 @@ from django.shortcuts import redirect
 from django.urls import path
 from django.urls import include
 # import app.views
-
+from core import views
 
 def index(request):
     return redirect('api/')
@@ -26,6 +26,7 @@ def index(request):
 
 urlpatterns = [
     path('', index),
+    path('applepay/session', views.validate_merchant),
     path('admin/', admin.site.urls),
     path('api/v2/', include('api2.urls')),
     path('api/', include('api.urls')),
