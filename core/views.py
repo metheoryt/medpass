@@ -17,6 +17,6 @@ def validate_merchant(request):
             "merchantIdentifier": "merchant.com.wooppay.processing",
             "displayName": "Wooppay LLC",
             "initiative": "web",
-            "initiativeContext": "pci-ws.wooppay.com"
+            "initiativeContext": "wopay.tk"
         }, cert=(os.path.join(BASE_DIR, 'merchantId.crt.pem'), os.path.join(BASE_DIR, 'merchantId.key.pem')))
         return JsonResponse(rs.json())
