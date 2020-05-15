@@ -11,8 +11,7 @@ const paymentRequest = {
 
 let performValidation = (validation_url) => {
     return new Promise(function(resolve, reject) {
-        console.log(validation_url)
-        resolve('opaque-session-object');
+    setTimeout(() => {resolve('opaque-session-object');}, 5000);
     });
 }
 
@@ -34,11 +33,11 @@ if (window.ApplePaySession) {
             // отображаем кнопку
 //            document.getElementById('applepay').style.display = "block";
             document.getElementById('applepay-btn').onclick = function (event) {
-                console.log(event);
                 const applePaySession = new window.ApplePaySession(1, paymentRequest);
                 applePaySession.onvalidatemerchant = (event) => {
                     // отправляем запрос на валидацию сессии
                     console.log(event);
+                    alert(event);
                     performValidation(event.validationURL)
                         .then((merchantSession) => {
                             // завершаем валидацию платежной сессии
@@ -64,7 +63,7 @@ if (window.ApplePaySession) {
                             console.log(reason);
                             applePaySession.completePayment(window.ApplePaySession.STATUS_FAILURE);
                         })
-                }
+                };
                 applePaySession.begin();
             }
         }
